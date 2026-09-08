@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>From repo to animated diagram</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --color-paper: #f5f5f5;
+      --color-ink: #2d3142;
+      --color-muted: #4f5d75;
+      --color-soft: #7a8399;
+      --color-accent: #eb6c36;
+      --color-rule: rgba(45,49,66,0.12);
+      --font-sans: 'Geist', system-ui, sans-serif;
+      --font-serif: 'Instrument Serif', serif;
+      --font-mono: 'Geist Mono', ui-monospace, monospace;
+      /* Latin first, then CJK: Geist Mono has no Han glyphs and falls through. */
+      --font-cjk: 'Geist Mono', 'Noto Sans SC', ui-monospace, monospace;
+      --flow-cycle: 4.4s;
+      --flow-ease: linear;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 48px 32px;
+      color: var(--color-ink);
+      background: var(--color-paper);
+      font-family: var(--font-sans);
+    }
+    [data-motion-root] { width: min(100%, 1160px); }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--color-muted);
+      font: 500 12px/1.4 var(--font-mono);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0 0 24px; font: 400 34px/1.15 var(--font-serif); }
+    svg { display: block; width: 100%; min-width: 760px; }
+    .legend {
+      margin: 16px 0 0;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-rule);
+      color: var(--color-muted);
+      font: 500 12px/1.7 var(--font-mono);
+    }
+    .legend code {
+      color: var(--color-ink);
+      font: 500 12px/1.7 var(--font-mono);
+    }
+
+    .flow-stream {
+      fill: none;
+      stroke: var(--color-accent);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-dasharray: 5 9;
+      pointer-events: none;
+    }
+    [data-motion-mode="flow"] .flow-stream {
+      animation: flow-stream var(--flow-cycle) var(--flow-ease) infinite;
+      animation-delay: var(--flow-delay, 0s);
+    }
+    @keyframes flow-stream { to { stroke-dashoffset: -70; } }
+
+    .flow-token {
+      fill: none;
+      stroke: var(--color-accent);
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke-dasharray: 0 var(--token-gap, 1);
+      stroke-dashoffset: var(--token-gap, 1);
+      pointer-events: none;
+    }
+    [data-motion-mode="flow"] .flow-token {
+      animation: flow-token var(--flow-cycle) var(--flow-ease) infinite;
+      animation-delay: var(--flow-delay, 0s);
+    }
+    @keyframes flow-token { to { stroke-dashoffset: 0; } }
+
+    .flow-token-halo { stroke-width: 22; opacity: .16; }
+
+    .flow-pulse {
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+      pointer-events: none;
+    }
+    [data-motion-mode="flow"] .flow-pulse {
+      animation: flow-pulse var(--flow-cycle) var(--flow-ease) infinite;
+      animation-delay: var(--flow-delay, 0s);
+    }
+    @keyframes flow-pulse {
+      0%, 60% { opacity: 0; transform: scale(.99); }
+      71%     { opacity: .55; transform: scale(1); }
+      100%    { opacity: 0; transform: scale(1.015); }
+    }
+
+    html[data-motion="static"] [data-motion-decorative] { display: none !important; }
+    html[data-motion="static"] * { animation: none !important; transition: none !important; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+      }
+      [data-motion-decorative] { display: none !important; }
+    }
+    @media print {
+      body { padding: 0; }
+      [data-motion-decorative] { display: none !important; }
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main data-motion-root data-motion-mode="flow" data-flow-cycle="4.4" data-frame="static" data-static-frame="complete">
+    <p class="eyebrow">Getting started · Continuous flow</p>
+    <h1>From repo to animated diagram</h1>
+
+    <svg viewBox="0 0 1160 710" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="getting-started-flow-title getting-started-flow-desc">
+      <title id="getting-started-flow-title">From repo to animated diagram</title>
+      <desc id="getting-started-flow-desc">Clone the repository, then install the skill into either Claude Code or Codex — both read the same directory. Ask for a diagram in plain language and the skill writes one self-contained HTML file that animates in any browser. Optionally install the Remotion renderer once and export that file to GIF, MP4 or WebM.</desc>
+      <defs>
+        <marker id="getting-started-flow-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/>
+        </marker>
+      </defs>
+      <rect width="1160" height="710" fill="#f5f5f5"/>
+
+      <!-- ===== Base layer ===== -->
+      <path d="M310 196 C356 196, 360 128, 400 128" fill="none" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#getting-started-flow-arrow)"/>
+      <path d="M310 196 C356 196, 360 252, 400 252" fill="none" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#getting-started-flow-arrow)"/>
+      <path d="M720 128 C766 128, 770 196, 810 196" fill="none" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#getting-started-flow-arrow)"/>
+      <path d="M720 252 C766 252, 770 196, 810 196" fill="none" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#getting-started-flow-arrow)"/>
+      <path d="M975 242 C975 322, 400 302, 400 382" fill="none" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#getting-started-flow-arrow)"/>
+      <path d="M570 428 H700" fill="none" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#getting-started-flow-arrow)"/>
+
+      <!-- 01 -->
+      <g>
+        <rect x="60" y="150" width="250" height="92" rx="8" fill="#f5f5f5" stroke="#2d3142"/>
+        <text x="80" y="176" fill="#7a8399" font-family="Geist Mono, monospace" font-size="11" font-weight="500">01</text>
+        <text x="185" y="198" text-anchor="middle" fill="#2d3142" font-family="Geist, sans-serif" font-size="16" font-weight="600">Clone the repo</text>
+        <text x="185" y="220" text-anchor="middle" fill="#4f5d75" font-family="Geist Mono, monospace" font-size="11">diagram-design-fly</text>
+      </g>
+
+      <!-- 02 · two hosts, one directory -->
+      <g>
+        <rect x="400" y="88" width="320" height="80" rx="8" fill="#f5f5f5" stroke="#2d3142"/>
+        <text x="420" y="114" fill="#7a8399" font-family="Geist Mono, monospace" font-size="11" font-weight="500">02a</text>
+        <text x="560" y="130" text-anchor="middle" fill="#2d3142" font-family="Geist, sans-serif" font-size="16" font-weight="600">Claude Code</text>
+        <text x="560" y="152" text-anchor="middle" fill="#4f5d75" font-family="Geist Mono, monospace" font-size="11">~/.claude/skills/diagram-design-fly</text>
+      </g>
+      <g>
+        <rect x="400" y="212" width="320" height="80" rx="8" fill="#f5f5f5" stroke="#2d3142"/>
+        <text x="420" y="238" fill="#7a8399" font-family="Geist Mono, monospace" font-size="11" font-weight="500">02b</text>
+        <text x="560" y="254" text-anchor="middle" fill="#2d3142" font-family="Geist, sans-serif" font-size="16" font-weight="600">Codex</text>
+        <text x="560" y="276" text-anchor="middle" fill="#4f5d75" font-family="Geist Mono, monospace" font-size="11">~/.codex/skills/diagram-design-fly</text>
+      </g>
+
+      <!-- 03 -->
+      <g>
+        <rect x="810" y="150" width="290" height="92" rx="8" fill="#f5f5f5" stroke="#2d3142"/>
+        <text x="830" y="176" fill="#7a8399" font-family="Geist Mono, monospace" font-size="11" font-weight="500">03</text>
+        <text x="955" y="198" text-anchor="middle" fill="#2d3142" font-family="Geist, sans-serif" font-size="16" font-weight="600">Just ask</text>
+        <text x="955" y="220" text-anchor="middle" fill="#4f5d75" font-family="Geist Mono, monospace" font-size="11">“…show the data flowing”</text>
+      </g>
+
+      <!-- 04 · the artifact -->
+      <g>
+        <rect x="230" y="382" width="340" height="92" rx="8" fill="rgba(235,108,54,0.10)" stroke="#eb6c36" stroke-width="1.5"/>
+        <text x="250" y="408" fill="#eb6c36" font-family="Geist Mono, monospace" font-size="11" font-weight="600">04</text>
+        <text x="400" y="430" text-anchor="middle" fill="#2d3142" font-family="Geist, sans-serif" font-size="17" font-weight="600">One HTML file</text>
+        <text x="400" y="452" text-anchor="middle" fill="#4f5d75" font-family="Geist Mono, monospace" font-size="11">animates in any browser · 0 deps</text>
+      </g>
+
+      <!-- 05 · optional video -->
+      <g>
+        <rect x="700" y="382" width="400" height="92" rx="8" fill="#f5f5f5" stroke="#2d3142" stroke-dasharray="5 4"/>
+        <text x="720" y="408" fill="#7a8399" font-family="Geist Mono, monospace" font-size="11" font-weight="500">05</text>
+        <text x="900" y="430" text-anchor="middle" fill="#2d3142" font-family="Geist, sans-serif" font-size="17" font-weight="600">GIF · MP4 · WebM</text>
+        <text x="900" y="452" text-anchor="middle" fill="#4f5d75" font-family="Geist Mono, monospace" font-size="11">optional · remotion + ffmpeg</text>
+      </g>
+      <text x="700" y="500" fill="#7a8399" font-family="Geist Mono, monospace" font-size="11">dashed = optional · steps 01–04 need nothing installed</text>
+      <text x="700" y="518" fill="#7a8399" font-family="Geist Mono, monospace" font-size="11">both hosts read the same directory</text>
+
+
+      <!-- ===== Footer: the prompt that made this figure ===== -->
+      <line x1="60" y1="536" x2="1100" y2="536" stroke="#4f5d75" stroke-opacity=".14" stroke-width="1"/>
+      <text x="60" y="562" fill="#eb6c36" font-family="Geist Mono, monospace" font-size="10" font-weight="600" letter-spacing="1.4">生成该图的指令 · PROMPT THAT MADE THIS</text>
+      <text x="60" y="590" fill="#4f5d75" font-family="Geist Mono, 'Noto Sans SC', monospace" font-size="12">中文：画一张从仓库到生成动效图的上手流程图，用 flow 模式让步骤流动起来。</text>
+      <text x="60" y="612" fill="#4f5d75" font-family="Geist Mono, monospace" font-size="12">EN: Draw a getting-started flow from repo to animated diagram, in flow mode.</text>
+      <text x="60" y="646" fill="#7a8399" font-family="Geist Mono, monospace" font-size="11">$ node scripts/render-video.mjs \</text>
+      <text x="60" y="666" fill="#7a8399" font-family="Geist Mono, monospace" font-size="11">    skills/diagram-design-fly/assets/example-getting-started-flow.html --format gif</text>
+
+      <!-- ===== Flow layer ===== -->
+      <g data-motion-decorative aria-hidden="true" focusable="false">
+        <path class="flow-stream" d="M310 196 C356 196, 360 128, 400 128"/>
+        <path class="flow-stream" d="M310 196 C356 196, 360 252, 400 252"/>
+        <path class="flow-stream" style="--flow-delay:-1.1s" d="M720 128 C766 128, 770 196, 810 196"/>
+        <path class="flow-stream" style="--flow-delay:-1.1s" d="M720 252 C766 252, 770 196, 810 196"/>
+        <path class="flow-stream" style="--flow-delay:-2.2s" d="M975 242 C975 322, 400 302, 400 382"/>
+        <path class="flow-stream" style="--flow-delay:-3.3s" d="M570 428 H700"/>
+
+        <path class="flow-token flow-token-halo" pathLength="1" d="M310 196 C356 196, 360 128, 400 128"/>
+        <path class="flow-token"                 pathLength="1" d="M310 196 C356 196, 360 128, 400 128"/>
+        <path class="flow-token flow-token-halo" pathLength="1" d="M310 196 C356 196, 360 252, 400 252"/>
+        <path class="flow-token"                 pathLength="1" d="M310 196 C356 196, 360 252, 400 252"/>
+        <path class="flow-token flow-token-halo" pathLength="1" style="--flow-delay:-1.1s" d="M720 128 C766 128, 770 196, 810 196"/>
+        <path class="flow-token"                 pathLength="1" style="--flow-delay:-1.1s" d="M720 128 C766 128, 770 196, 810 196"/>
+        <path class="flow-token flow-token-halo" pathLength="1" style="--flow-delay:-1.1s" d="M720 252 C766 252, 770 196, 810 196"/>
+        <path class="flow-token"                 pathLength="1" style="--flow-delay:-1.1s" d="M720 252 C766 252, 770 196, 810 196"/>
+        <path class="flow-token flow-token-halo" pathLength="1" style="--token-gap:.5; --flow-delay:-2.2s" d="M975 242 C975 322, 400 302, 400 382"/>
+        <path class="flow-token"                 pathLength="1" style="--token-gap:.5; --flow-delay:-2.2s" d="M975 242 C975 322, 400 302, 400 382"/>
+        <path class="flow-token flow-token-halo" pathLength="1" style="--flow-delay:-3.3s" d="M570 428 H700"/>
+        <path class="flow-token"                 pathLength="1" style="--flow-delay:-3.3s" d="M570 428 H700"/>
+
+        <rect class="flow-pulse" x="400" y="88" width="320" height="80" rx="8" fill="none" stroke="#eb6c36" stroke-width="2"/>
+        <rect class="flow-pulse" x="400" y="212" width="320" height="80" rx="8" fill="none" stroke="#eb6c36" stroke-width="2"/>
+        <rect class="flow-pulse" x="810" y="150" width="290" height="92" rx="8" fill="none" stroke="#eb6c36" stroke-width="2" style="--flow-delay:-1.1s"/>
+        <rect class="flow-pulse" x="230" y="382" width="340" height="92" rx="8" fill="none" stroke="#eb6c36" stroke-width="2.5" style="--flow-delay:-2.2s"/>
+        <rect class="flow-pulse" x="700" y="382" width="400" height="92" rx="8" fill="none" stroke="#eb6c36" stroke-width="2" style="--flow-delay:-3.3s"/>
+      </g>
+    </svg>
+
+    <p class="legend">
+      <code>01</code> git clone https://github.com/huangzhuxing/diagram-design-fly &nbsp;·&nbsp;
+      <code>02</code> ln -s &lt;repo&gt;/skills/diagram-design-fly ~/.claude/skills/ &nbsp;(and/or ~/.codex/skills/)<br>
+      <code>03</code> ask in plain language &nbsp;·&nbsp;
+      <code>05</code> cd remotion &amp;&amp; npm install &nbsp;then&nbsp; node scripts/render-video.mjs &lt;file&gt;.html --format gif
+    </p>
+  </main>
+</body>
+</html>

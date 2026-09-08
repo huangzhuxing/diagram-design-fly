@@ -14,8 +14,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-TYPE_SEQ = ROOT / "skills/diagram-design/references/type-sequence.md"
-ASSETS = ROOT / "skills/diagram-design/assets"
+TYPE_SEQ = ROOT / "skills/diagram-design-fly/references/type-sequence.md"
+ASSETS = ROOT / "skills/diagram-design-fly/assets"
 COLD = [
     ASSETS / "example-sequence.html",
     ASSETS / "example-sequence-dark.html",

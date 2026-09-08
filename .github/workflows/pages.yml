@@ -24,10 +24,25 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v6
 
-      - name: Upload gallery artifact
+      - name: Assemble site
+        run: |
+          # The diagrams are self-contained pages, so the site is mostly a copy
+          # of the asset directory. The landing page is separate because it
+          # leads with the flow examples, and the upstream tabbed gallery keeps
+          # its own URL rather than being replaced.
+          mkdir -p _site/examples
+          cp -R skills/diagram-design-fly/assets/. _site/
+          mv _site/index.html _site/gallery.html
+          cp docs/site/index.html _site/index.html
+          cp docs/examples/*.html _site/examples/
+          test -f _site/gallery.html
+          test -f _site/example-skill-architecture-flow.html
+          test -f _site/examples/opspilot-current-architecture.html
+
+      - name: Upload site artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: skills/diagram-design/assets
+          path: _site
 
   deploy:
     needs: build

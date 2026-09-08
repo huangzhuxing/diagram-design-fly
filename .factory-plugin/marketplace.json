@@ -1,8 +1,8 @@
 {
-  "name": "diagram-design",
+  "name": "diagram-design-fly",
   "plugins": [
     {
-      "name": "diagram-design",
+      "name": "diagram-design-fly",
       "source": "./"
     }
   ]

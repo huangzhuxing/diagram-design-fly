@@ -1,0 +1,19 @@
+# Files with contrast findings that predate scripts/lint-contrast.py.
+#
+# Each is upstream work this fork did not author. They are listed so the gate
+# goes green on the corpus as it stands while still failing anything new — the
+# same arrangement lint-skin-baseline.txt uses.
+#
+# The dark variants are the substantive ones: their axis and tick labels render
+# in a light grey that lands on the light page background rather than on a dark
+# panel, so the text is effectively invisible at ~1.7:1. Worth an upstream
+# issue; out of scope for this fork.
+#
+# Remove a line when its file is fixed. Do not raise the threshold instead.
+example-bar-dark.html
+example-scatter-dark.html
+example-gantt-dark.html
+example-polar.html
+example-polar-full.html
+example-polar-dark.html
+example-policy-trace-animated.html

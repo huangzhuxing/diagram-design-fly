@@ -60,7 +60,7 @@ representative at an online or offline event.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement at
-[github.com/cathrynlavery/diagram-design/issues](https://github.com/cathrynlavery/diagram-design/issues)
+[github.com/huangzhuxing/diagram-design-fly/issues](https://github.com/huangzhuxing/diagram-design-fly/issues)
 or via private vulnerability reporting ([SECURITY.md](SECURITY.md) links the
 private path). All complaints will be reviewed and investigated promptly and
 fairly.

@@ -11,7 +11,8 @@
 Two rules, in priority order:
 
 1. The frontmatter `description` must name every visual type in the selection table (enforced by `scripts/verify-docs-sync.py`) plus the import formats and major feature vocabulary. Routing surface is never traded for body prose.
-2. `MAX_SKILL_BYTES` is 40,000 (enforced by `scripts/verify-semantic-motion.py`). When the file approaches the cap, cut body prose or move detail into `references/` — never the description.
+2. `MAX_SKILL_BYTES` is 40,000 (enforced by `scripts/verify-semantic-motion.py`).
+   **Amended by ADR 0011: the cap is now 42,000.** Rule 1 below is unchanged. When the file approaches the cap, cut body prose or move detail into `references/` — never the description.
 
 ## Consequences
 

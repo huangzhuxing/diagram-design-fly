@@ -1,0 +1,142 @@
+# Export to MP4 / WebM / GIF
+
+Render a [`flow`](flow.md) diagram to video. **Manual only — never run
+unprompted**, exactly like [`export.md`](export.md).
+
+## When to use
+
+- The user asks to export, record, or convert a diagram to video, GIF, MP4, or
+  WebM — "make a gif of that", "record the animation", "give me an mp4 for the
+  slide".
+- A README, release note, or social post needs the motion visible where a
+  static PNG would lose the point.
+
+Static SVG and PNG remain the default deliverable. Reach for video only when
+the movement *is* the content.
+
+## Requirements
+
+Node 18+, and one install inside the repo:
+
+```bash
+cd remotion && npm install
+```
+
+`ffmpeg` must be on `PATH` for GIF. Remotion downloads its own Chromium on
+first render.
+
+None of this is needed to *author* a flow diagram — the HTML animates on its
+own in any browser. This is an optional export layer.
+
+## Usage
+
+```bash
+node scripts/render-video.mjs <diagram.html> [options]
+```
+
+| Option | Default | Notes |
+|---|---|---|
+| `--format` | `gif` | `mp4`, `webm`, or `gif` |
+| `--out` | source path with the new extension | |
+| `--fps` | `30` | `20` is plenty for GIF and roughly a third smaller |
+| `--cycles` | `1` | one cycle is a seamless loop; more only grows the file |
+| `--scale` | `2` (`1.5` for GIF) | supersampling, for crisp type |
+| `--padding` | `32` | margin around the diagram, in composition pixels |
+| `--width` | the SVG's viewBox width | height follows the aspect ratio |
+
+```bash
+# README hero
+node scripts/render-video.mjs skills/diagram-design-fly/assets/example-skill-architecture-flow.html \
+  --format gif --fps 20 --scale 1 --out docs/motion/skill-architecture.gif
+
+# Slide-quality clip
+node scripts/render-video.mjs my-diagram.html --format mp4 --scale 2
+```
+
+## How it works
+
+The renderer does not reimplement the animation. It runs the diagram's own
+stylesheet and moves the clock:
+
+```css
+*, *::before, *::after {
+  animation-play-state: paused !important;
+  animation-delay: calc(var(--flow-delay, 0s) - {t}s) !important;
+}
+```
+
+`animation-play-state: paused` stops the clock and a negative `animation-delay`
+seeks it, so the authored keyframes render at exactly `t = frame / fps`. The
+delay is a `calc()` over each element's own `--flow-delay`, so per-element phase
+survives the seek — a conduit authored `.5s` ahead stays `.5s` ahead in the
+video.
+
+This is why the clip cannot drift from the page: both run the same keyframes
+from the same stylesheet, and differ only in who advances time.
+
+Three consequences worth knowing:
+
+- **Frames are deterministic.** Frame `n` depends on `n` alone, never on
+  wall-clock or render speed. Two renders of one source are identical.
+- **The loop is seamless by construction.** One cycle at `data-flow-cycle`
+  seconds means frame `N` would equal frame `0`, so it is not emitted.
+- **Only CSS animation is captured.** A `step` or `reveal` diagram is driven by
+  its JavaScript controller, which this renderer does not run; it warns and
+  produces a still. Export those as PNG, or re-author them as `flow`.
+
+### Pipeline
+
+```
+diagram.html
+   ├─ <style> blocks          ─┐
+   ├─ first <svg> block        ├─→ props.json ─→ Remotion ─→ frames
+   ├─ [data-motion-root] attrs ─┤                              │
+   └─ font <link> hrefs       ─┘                               │
+                                                    ┌──────────┴──────────┐
+                                              mp4 / webm            PNG sequence
+                                             (Remotion +                 │
+                                              ffmpeg h264/vp9)     ffmpeg palettegen
+                                                                          │
+                                                                         gif
+```
+
+The motion root's attributes travel with the SVG because flow CSS is scoped as
+`[data-motion-mode="flow"] .flow-stream`. Without them every animation is
+switched off and the output is a silent still.
+
+GIF goes through a lossless PNG sequence rather than straight from video.
+Palette generation over compressed frames bakes h264 ringing into 256 colours,
+which is exactly where flat editorial fills turn into banding.
+
+## Choosing a format
+
+| | Use for | Size, 4s at 1224×584 |
+|---|---|---|
+| **GIF** | GitHub READMEs, chat, anywhere that will not autoplay video | ~500 KB at `--fps 20 --scale 1` |
+| **MP4** | slides, docs sites, social | ~250 KB at `--scale 2` |
+| **WebM** | web pages where you control the markup; best quality per byte | ~120 KB |
+
+GIF is capped at 256 colours with no alpha. The editorial palette survives it
+well — flat fills, few hues — but a diagram carrying photographic fills or long
+gradients should ship MP4 or WebM.
+
+## Keeping a committed asset honest
+
+A rendered file goes stale silently when its source changes. Re-render in the
+same commit that touches the diagram, and keep the command in the commit
+message or a script. `docs/motion/` in this repo is regenerated by:
+
+```bash
+node scripts/render-motion-assets.mjs
+```
+
+## Anti-patterns
+
+- Auto-emitting a video alongside HTML generation. Manual on every call, same
+  rule as SVG and PNG.
+- `--cycles 4` to make a clip "longer". The motion is identical every cycle;
+  this only quadruples the file.
+- Rendering a `step` diagram and shipping the still it produces as if it were
+  the animation.
+- Committing a GIF whose source diagram has since changed.
+- Reaching for video when a PNG carries the same information.

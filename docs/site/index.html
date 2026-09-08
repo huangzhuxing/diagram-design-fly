@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagram Design Fly · 会动的架构图</title>
+<meta name="description" content="Editorial diagrams that flow. A fork of diagram-design adding continuous-motion diagrams and a video export path.">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{
+    --paper:#f5f5f5; --ink:#2d3142; --muted:#4f5d75; --soft:#7a8399;
+    --accent:#eb6c36; --rule:rgba(45,49,66,.12); --card:#fff;
+    --sans:'Geist','Noto Sans SC',system-ui,sans-serif;
+    --serif:'Instrument Serif',serif;
+    --mono:'Geist Mono',ui-monospace,monospace;
+    /* Every frame renders at this logical width, then scales to its card, so
+       the diagrams stay crisp instead of being resampled like a bitmap. */
+    --frame-w:1280px; --frame-h:880px;
+  }
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+  header{border-bottom:1px solid var(--rule);padding:28px 0 22px;margin-bottom:52px}
+  .bar{display:flex;align-items:baseline;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .brand{font:400 26px/1 var(--serif)}
+  .brand em{font-style:italic;color:var(--accent)}
+  .bar nav{display:flex;gap:8px;flex-wrap:wrap}
+  .bar nav a{
+    font:500 11px/1 var(--mono);letter-spacing:.06em;color:var(--muted);
+    text-decoration:none;padding:7px 12px;border:1px solid var(--rule);border-radius:4px;
+    transition:color .12s,border-color .12s;
+  }
+  .bar nav a:hover{color:var(--accent);border-color:var(--accent)}
+
+  .eyebrow{font:600 11px/1.4 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+  h1{font:400 clamp(34px,5vw,52px)/1.1 var(--serif);margin:0 0 18px;max-width:20ch}
+  h1 em{font-style:italic;color:var(--accent)}
+  .lede{font-size:17px;color:var(--muted);max-width:62ch;margin:0 0 8px}
+  h2{font:400 clamp(26px,3.4vw,34px)/1.15 var(--serif);margin:0 0 14px}
+  section{margin:0 0 76px}
+  .rule{border:0;border-top:1px solid var(--rule);margin:0 0 52px}
+
+  pre{
+    background:var(--card);border:1px solid var(--rule);border-radius:6px;
+    padding:14px 16px;overflow-x:auto;margin:18px 0;
+    font:500 13px/1.7 var(--mono);color:var(--ink);
+  }
+  code{font:500 .92em var(--mono)}
+  .note{font-size:14px;color:var(--muted);max-width:70ch}
+  .note strong{color:var(--ink)}
+
+  /*
+    A card crops one full-size frame and scales it down.
+
+    The iframe is absolutely positioned on purpose. `transform: scale()` paints
+    smaller but still occupies its untransformed box, so an in-flow 1280px frame
+    would force every grid column to 1280px and blow the page out sideways.
+    Taking it out of flow lets the card take its width from the layout, and the
+    card's own height is derived from the same scale.
+  */
+  .stage{
+    /*
+      `--s` has to be a plain number, and CSS cannot produce one from viewport
+      units: calc(1180px / 1280) is a length, not a ratio, so both scale() and
+      the height calc below would be invalid. The script at the end of the page
+      measures each card and sets it. Without JavaScript the aspect-ratio still
+      gives the card a sensible box and the frame simply renders unscaled and
+      cropped — degraded, not broken.
+    */
+    --s:1;
+    position:relative;width:100%;overflow:hidden;aspect-ratio:1280 / 880;
+    border:1px solid var(--rule);border-radius:8px;background:var(--card);
+  }
+  .stage iframe{
+    position:absolute;top:0;left:0;
+    width:var(--frame-w);height:var(--frame-h);border:0;display:block;
+    transform:scale(var(--s));transform-origin:top left;
+  }
+
+  /* minmax(0,1fr) so a column may shrink below its content's intrinsic width. */
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+  figure{margin:0}
+  figcaption{
+    display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    padding:10px 2px 0;font:500 12px/1.5 var(--mono);color:var(--muted);
+  }
+  figcaption a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule)}
+  figcaption a:hover{color:var(--accent);border-color:var(--accent)}
+  .tag{color:var(--accent);white-space:nowrap}
+
+  footer{border-top:1px solid var(--rule);padding:32px 0 60px;font-size:14px;color:var(--muted)}
+  footer a{color:var(--ink)}
+
+  @media (max-width:820px){
+    .grid{grid-template-columns:minmax(0,1fr)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    /* The diagrams honour this themselves; nothing here needs to move either. */
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="brand">Diagram Design <em>Fly</em></div>
+    <nav>
+      <a href="gallery.html">全部 39 种图型 ↗</a>
+      <a href="https://github.com/huangzhuxing/diagram-design-fly">GitHub ↗</a>
+      <a href="https://github.com/cathrynlavery/diagram-design">上游原版 ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <p class="eyebrow">Flow mode · 纯 CSS · 零 JavaScript</p>
+    <h1>会<em>流动</em>的架构图</h1>
+    <p class="lede">
+      这是 <a href="https://github.com/cathrynlavery/diagram-design">diagram-design</a> 的一个 fork，
+      加了一件事：当图承载了顺序 —— 管线、生命周期、循环、跨时间的计划 ——
+      它默认就会动起来，并且能一条命令渲染成 MP4 / WebM / GIF。
+    </p>
+    <p class="note" style="margin-bottom:26px">
+      下面每一张都是<strong>实时播放的 HTML</strong>，不是录屏。整个动效层是纯 CSS，
+      删掉它剩下的仍是一张完整的静态图 —— 打印、<code>prefers-reduced-motion</code>、
+      PNG 导出都会回到那一帧。
+    </p>
+    <div class="stage">
+      <iframe src="example-skill-architecture-flow.html" title="这个 skill 自身的架构" loading="eager"></iframe>
+    </div>
+    <figcaption>
+      <span><a href="example-skill-architecture-flow.html">这个 skill 为自己画的架构图</a></span>
+      <span class="tag">它自己画的，动效也是它自己的</span>
+    </figcaption>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <p class="eyebrow">真实案例</p>
+    <h2>一句提示词，一整页架构</h2>
+    <p class="note">
+      来自一个真实仓库 —— 一个 Go + React 的 SRE 控制台。除了装好 skill 之外没有任何额外配置，
+      完整的提示词只有一句：
+    </p>
+    <pre>将当前的项目架构详细描述出来</pre>
+    <p class="note" style="margin-bottom:22px">
+      没提动效、没指定图型、没说版面、没给配色。它读了代码库，返回的是一整页三张图。
+      更值得注意的是它<strong>没画什么</strong>：真实连接器、IAM 审批、持久化任务队列这些
+      规划中但尚未建成的部分，被虚线标为「演示或可选路径」，而不是画成现有能力。
+    </p>
+    <div class="stage" data-frame-h="1120">
+      <!-- A whole document, not a single diagram: the anchor lands on the figure. -->
+      <iframe src="examples/opspilot-current-architecture.html#runtime" title="OpsPilot 当前运行时架构" loading="lazy"></iframe>
+    </div>
+    <figcaption>
+      <span><a href="examples/opspilot-current-architecture.html">OpsPilot · 当前运行时架构</a></span>
+      <span class="tag">同一页里还有模块依赖图和状态机</span>
+    </figcaption>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <p class="eyebrow">有顺序的图型</p>
+    <h2>39 种里，17 种默认会动</h2>
+    <p class="note" style="margin-bottom:26px">
+      判据不是「这是什么图型」，而是「这张图有没有承载一条读者要走的顺序」。
+      有的就上 flow 加阶段序号；没有的 —— 柱状图、雷达图、ER 图 —— 保持静态，
+      因为在那里加动效只是装饰。
+    </p>
+    <div class="grid">
+
+      <figure>
+        <div class="stage"><iframe src="example-architecture-flow.html" title="Web 应用架构" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-architecture-flow.html">Architecture · 架构</a></span></figcaption>
+      </figure>
+      <figure>
+        <div class="stage"><iframe src="example-data-flow-flow.html" title="数据流" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-data-flow-flow.html">Data flow · 数据流</a></span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="stage"><iframe src="example-loop-flow.html" title="内容增长飞轮" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-loop-flow.html">Loop · 飞轮</a></span><span class="tag">序号 5</span></figcaption>
+      </figure>
+      <figure>
+        <div class="stage"><iframe src="example-timeline-flow.html" title="产品发布时间线" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-timeline-flow.html">Timeline · 时间线</a></span><span class="tag">序号 5</span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="stage"><iframe src="example-gantt-flow.html" title="项目甘特图" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-gantt-flow.html">Gantt · 甘特图</a></span><span class="tag">序号 4</span></figcaption>
+      </figure>
+      <figure>
+        <div class="stage"><iframe src="example-kanban-flow.html" title="产品看板" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-kanban-flow.html">Kanban · 看板</a></span><span class="tag">序号 4</span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="stage"><iframe src="example-journey-flow.html" title="用户旅程" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-journey-flow.html">User journey · 用户旅程</a></span><span class="tag">序号 4</span></figcaption>
+      </figure>
+      <figure>
+        <div class="stage"><iframe src="example-story-map-flow.html" title="用户故事地图" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-story-map-flow.html">Story map · 故事地图</a></span><span class="tag">序号 4</span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="stage"><iframe src="example-process-flow.html" title="跨部门业务流程" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-process-flow.html">Process · 业务流程</a></span><span class="tag">序号 4</span></figcaption>
+      </figure>
+      <figure>
+        <div class="stage"><iframe src="example-swimlane-flow.html" title="跨部门交付流程" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-swimlane-flow.html">Swimlane · 泳道</a></span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="stage"><iframe src="example-medallion-flow.html" title="数据分层" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-medallion-flow.html">Medallion · 数据分层</a></span><span class="tag">序号 3</span></figcaption>
+      </figure>
+      <figure>
+        <div class="stage"><iframe src="example-dp-integration-flow.html" title="数据平台集成" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-dp-integration-flow.html">DP integration · 平台集成</a></span><span class="tag">序号 3</span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="stage"><iframe src="example-deployment-flow.html" title="部署拓扑" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-deployment-flow.html">Deployment · 部署</a></span><span class="tag">序号 4</span></figcaption>
+      </figure>
+      <figure>
+        <div class="stage"><iframe src="example-high-level-flow.html" title="高层概览" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-high-level-flow.html">High-level · 高层概览</a></span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="stage"><iframe src="example-flowchart-flow.html" title="审批决策流程" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-flowchart-flow.html">Flowchart · 流程图</a></span></figcaption>
+      </figure>
+      <figure>
+        <div class="stage"><iframe src="example-state-flow.html" title="订单状态机" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-state-flow.html">State · 状态机</a></span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="stage"><iframe src="example-sequence-flow.html" title="API 调用时序" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-sequence-flow.html">Sequence · 时序</a></span></figcaption>
+      </figure>
+      <figure>
+        <div class="stage"><iframe src="template-flow.html" title="Flow 模板" loading="lazy"></iframe></div>
+        <figcaption><span><a href="template-flow.html">Template · 起手模板</a></span><span class="tag">从这里开始写</span></figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <p class="eyebrow">原理</p>
+    <h2>一个机制，两个时钟</h2>
+    <p class="note" style="margin-bottom:26px">
+      全部动效都是一个动画化的 <code>stroke-dashoffset</code> —— 没有 <code>offset-path</code>、
+      没有 <code>&lt;animateMotion&gt;</code>、没有逐帧 JavaScript。
+      视频渲染器不重新实现动画，它运行图自己的样式表然后拨动时钟，所以视频不可能和网页漂移。
+    </p>
+    <div class="grid">
+      <figure>
+        <div class="stage"><iframe src="example-flow-mechanism-flow.html" title="flow 模式原理" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-flow-mechanism-flow.html">机制：三条活体样本</a></span></figcaption>
+      </figure>
+      <figure>
+        <div class="stage"><iframe src="example-getting-started-flow.html" title="上手流程" loading="lazy"></iframe></div>
+        <figcaption><span><a href="example-getting-started-flow.html">上手：从仓库到动效图</a></span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <p class="eyebrow">安装</p>
+    <h2>一次克隆，两个宿主</h2>
+    <p class="note">Claude Code 和 Codex 读的是同一个目录：</p>
+<pre>git clone https://github.com/huangzhuxing/diagram-design-fly.git ~/code/diagram-design-fly
+
+ln -s ~/code/diagram-design-fly/skills/diagram-design-fly ~/.claude/skills/diagram-design-fly
+ln -s ~/code/diagram-design-fly/skills/diagram-design-fly ~/.codex/skills/diagram-design-fly</pre>
+    <p class="note">
+      然后用大白话提要求就行。渲染成视频是可选的、手动的：
+    </p>
+<pre>cd remotion &amp;&amp; npm install
+node scripts/render-video.mjs 你的图.html --format gif</pre>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  上游 <strong>diagram-design</strong> 由 <a href="https://github.com/cathrynlavery">Cathryn Lavery</a> 创作 ——
+  39 种图型、整套设计系统、语义模式与校验体系都是她的工作。
+  这个 fork 只加了 <code>flow</code> 模式和 Remotion 视频管线。
+  如果你不需要动效，请直接用<a href="https://github.com/cathrynlavery/diagram-design">原版</a>。 · MIT
+</footer>
+
+<script>
+  // Fit each full-size frame to the card that crops it.
+  const FRAME_W = 1280, FRAME_H = 880;
+  function fit() {
+    for (const stage of document.querySelectorAll('.stage')) {
+      const frameH = Number(stage.dataset.frameH) || FRAME_H;
+      const scale = stage.clientWidth / FRAME_W;
+      stage.style.setProperty('--s', scale);
+      stage.style.setProperty('--frame-h', frameH + 'px');
+      stage.style.height = (frameH * scale) + 'px';
+      stage.style.aspectRatio = 'auto';
+    }
+  }
+  fit();
+  addEventListener('resize', fit);
+  // Webfonts land after first paint and can change a diagram's height slightly.
+  if (document.fonts) document.fonts.ready.then(fit);
+</script>
+</body>
+</html>

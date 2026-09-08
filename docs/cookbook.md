@@ -1,8 +1,8 @@
 # Diagram Design cookbook
 
-Operator recipes for this repository. The design system still lives in [`skills/diagram-design/SKILL.md`](../skills/diagram-design/SKILL.md); this file is the runbook: what to say, which files to load, and which commands to run.
+Operator recipes for this repository. The design system still lives in [`skills/diagram-design-fly/SKILL.md`](../skills/diagram-design-fly/SKILL.md); this file is the runbook: what to say, which files to load, and which commands to run.
 
-Use it from an **editable clone** (this checkout). Managed marketplace installs can still follow the recipes, but do not edit `references/style-guide.md` inside a package that updates will replace — save a [client profile](../skills/diagram-design/references/profiles.md) instead.
+Use it from an **editable clone** (this checkout). Managed marketplace installs can still follow the recipes, but do not edit `references/style-guide.md` inside a package that updates will replace — save a [client profile](../skills/diagram-design-fly/references/profiles.md) instead.
 
 ---
 
@@ -25,7 +25,7 @@ Use it from an **editable clone** (this checkout). Managed marketplace installs 
 
 ## R0. Editable install
 
-The canonical skill root is `skills/diagram-design/` (`SKILL.md` + `references/` + `assets/`). Point skill hosts at that inner directory. Pi and the repository's native marketplace packages are the exceptions because they already resolve the `skills/` directory from the repository root.
+The canonical skill root is `skills/diagram-design-fly/` (`SKILL.md` + `references/` + `assets/`). Point skill hosts at that inner directory. Pi and the repository's native marketplace packages are the exceptions because they already resolve the `skills/` directory from the repository root.
 
 This repository does not duplicate `SKILL.md` into host-specific loader stubs. For an editable install, symlink or junction the canonical inner directory into one discovery root used by your host.
 
@@ -46,17 +46,17 @@ Marketplace installs (Claude `/plugin`, `codex plugin add`, `droid plugin instal
 ### Unix (user-global inner skill)
 
 ```bash
-git clone https://github.com/cathrynlavery/diagram-design.git ~/code/diagram-design
-DIAGRAM_SKILL=~/code/diagram-design/skills/diagram-design
+git clone https://github.com/huangzhuxing/diagram-design-fly.git ~/code/diagram-design-fly
+DIAGRAM_SKILL=~/code/diagram-design-fly/skills/diagram-design-fly
 mkdir -p ~/.claude/skills ~/.cursor/skills ~/.agents/skills ~/.cline/skills \
   ~/.kiro/skills ~/.config/opencode/skills ~/.copilot/skills
-ln -s "$DIAGRAM_SKILL" ~/.claude/skills/diagram-design
-ln -s "$DIAGRAM_SKILL" ~/.cursor/skills/diagram-design
-ln -s "$DIAGRAM_SKILL" ~/.agents/skills/diagram-design
-ln -s "$DIAGRAM_SKILL" ~/.cline/skills/diagram-design
-ln -s "$DIAGRAM_SKILL" ~/.kiro/skills/diagram-design
-ln -s "$DIAGRAM_SKILL" ~/.config/opencode/skills/diagram-design
-ln -s "$DIAGRAM_SKILL" ~/.copilot/skills/diagram-design
+ln -s "$DIAGRAM_SKILL" ~/.claude/skills/diagram-design-fly
+ln -s "$DIAGRAM_SKILL" ~/.cursor/skills/diagram-design-fly
+ln -s "$DIAGRAM_SKILL" ~/.agents/skills/diagram-design-fly
+ln -s "$DIAGRAM_SKILL" ~/.cline/skills/diagram-design-fly
+ln -s "$DIAGRAM_SKILL" ~/.kiro/skills/diagram-design-fly
+ln -s "$DIAGRAM_SKILL" ~/.config/opencode/skills/diagram-design-fly
+ln -s "$DIAGRAM_SKILL" ~/.copilot/skills/diagram-design-fly
 ```
 
 Create only the destinations for the hosts you use. When a host scans both its native root and `.agents/skills/`, choose one so it does not discover the same skill twice.
@@ -64,15 +64,15 @@ Create only the destinations for the hosts you use. When a host scans both its n
 ### Windows (directory junction — not a file symlink)
 
 ```powershell
-$src = "E:\diagram-design\skills\diagram-design"
+$src = "E:\diagram-design-fly\skills\diagram-design-fly"
 foreach ($t in @(
-  "$env:USERPROFILE\.claude\skills\diagram-design",
-  "$env:USERPROFILE\.cursor\skills\diagram-design",
-  "$env:USERPROFILE\.agents\skills\diagram-design",
-  "$env:USERPROFILE\.cline\skills\diagram-design",
-  "$env:USERPROFILE\.kiro\skills\diagram-design",
-  "$env:USERPROFILE\.config\opencode\skills\diagram-design",
-  "$env:USERPROFILE\.copilot\skills\diagram-design"
+  "$env:USERPROFILE\.claude\skills\diagram-design-fly",
+  "$env:USERPROFILE\.cursor\skills\diagram-design-fly",
+  "$env:USERPROFILE\.agents\skills\diagram-design-fly",
+  "$env:USERPROFILE\.cline\skills\diagram-design-fly",
+  "$env:USERPROFILE\.kiro\skills\diagram-design-fly",
+  "$env:USERPROFILE\.config\opencode\skills\diagram-design-fly",
+  "$env:USERPROFILE\.copilot\skills\diagram-design-fly"
 )) {
   $parent = Split-Path $t -Parent
   if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
@@ -80,7 +80,7 @@ foreach ($t in @(
 }
 ```
 
-Replace `E:\diagram-design` with your clone path. If a junction already exists, leave it; do not copy the skill over a managed plugin folder.
+Replace `E:\diagram-design-fly` with your clone path. If a junction already exists, leave it; do not copy the skill over a managed plugin folder.
 
 Pi still registers the **repo root**: `pi install <clone-path>`.
 
@@ -88,9 +88,9 @@ Pi still registers the **repo root**: `pi install <clone-path>`.
 
 ## R1. Doctor
 
-Ask in any host: `run diagram-design doctor` or `/diagram-design:doctor` / `/doctor`.
+Ask in any host: `run diagram-design-fly doctor` or `/diagram-design-fly:doctor` / `/doctor`.
 
-The procedure is [`references/doctor.md`](../skills/diagram-design/references/doctor.md). It must not install packages. Typical local setup for PNG export:
+The procedure is [`references/doctor.md`](../skills/diagram-design-fly/references/doctor.md). It must not install packages. Typical local setup for PNG export:
 
 ```bash
 python -m pip install playwright
@@ -103,13 +103,13 @@ On Windows, `python` is the usual interpreter; the skill also accepts `python3` 
 
 ## R2. First diagram in a project
 
-Work in the **project that will own the HTML**, not inside `skills/diagram-design/assets/` unless you are contributing an example.
+Work in the **project that will own the HTML**, not inside `skills/diagram-design-fly/assets/` unless you are contributing an example.
 
-1. **Style-guide gate** ([SKILL.md §0](../skills/diagram-design/SKILL.md)). If the working copy is still shipped defaults (paper `#f5f5f5`, ink `#2d3142`, accent `#eb6c36`), the agent must pause and offer onboarding, a profile, or an explicit default. Skip the gate when a valid `.diagram-design` marker selects a profile (including `profile: default`).
-2. **Confirm before drawing** ([SKILL.md §3](../skills/diagram-design/SKILL.md)): visual type, optional semantic pattern, size preset, and what the complexity budget will cut.
-3. **Load** the matching `references/type-*.md` before writing SVG. If a semantic pattern applies, load [`semantic-patterns.md`](../skills/diagram-design/references/semantic-patterns.md) first.
+1. **Style-guide gate** ([SKILL.md §0](../skills/diagram-design-fly/SKILL.md)). If the working copy is still shipped defaults (paper `#f5f5f5`, ink `#2d3142`, accent `#eb6c36`), the agent must pause and offer onboarding, a profile, or an explicit default. Skip the gate when a valid `.diagram-design-fly` marker selects a profile (including `profile: default`).
+2. **Confirm before drawing** ([SKILL.md §3](../skills/diagram-design-fly/SKILL.md)): visual type, optional semantic pattern, size preset, and what the complexity budget will cut.
+3. **Load** the matching `references/type-*.md` before writing SVG. If a semantic pattern applies, load [`semantic-patterns.md`](../skills/diagram-design-fly/references/semantic-patterns.md) first.
 4. **Write** a self-contained HTML file in the project (for example `docs/diagrams/<name>.html`). Do not silently overwrite gallery examples.
-5. **Run** the pre-output checklist ([SKILL.md §9](../skills/diagram-design/SKILL.md)). Orthogonal connectors, 4px grid, ≤9 nodes unless you split, accent on ≤2 focals.
+5. **Run** the pre-output checklist ([SKILL.md §9](../skills/diagram-design-fly/SKILL.md)). Orthogonal connectors, 4px grid, ≤9 nodes unless you split, accent on ≤2 focals.
 
 Marker file at the project root, entire file:
 
@@ -117,18 +117,18 @@ Marker file at the project root, entire file:
 profile: <slug>
 ```
 
-See [`profiles.md`](../skills/diagram-design/references/profiles.md). Profiles live in `~/.diagram-design/profiles/`, not in this clone.
+See [`profiles.md`](../skills/diagram-design-fly/references/profiles.md). Profiles live in `~/.diagram-design-fly/profiles/`, not in this clone.
 
 ---
 
 ## R3. Onboard a skin
 
-Full flow: [`onboarding.md`](../skills/diagram-design/references/onboarding.md).
+Full flow: [`onboarding.md`](../skills/diagram-design-fly/references/onboarding.md).
 
 Say one of:
 
-- `Onboard diagram-design to https://example.com`
-- `Extract diagram-design tokens from the local design-system folder <path>`
+- `Onboard diagram-design-fly to https://example.com`
+- `Extract diagram-design-fly tokens from the local design-system folder <path>`
 - `Use these tokens: paper … ink … accent …` (manual)
 - `Proceed with the default skin` (optionally write `profile: default` with consent)
 
@@ -138,7 +138,7 @@ Then: propose the style-guide diff, wait for approval, write `references/style-g
 
 ## R4. Selection cheat sheet
 
-Do not duplicate the 39-type table here. Open [SKILL.md §3](../skills/diagram-design/SKILL.md) and pick one layout grammar.
+Do not duplicate the 39-type table here. Open [SKILL.md §3](../skills/diagram-design-fly/SKILL.md) and pick one layout grammar.
 
 **Behavior first** (then nearest type):
 
@@ -152,11 +152,11 @@ Do not duplicate the 39-type table here. Open [SKILL.md §3](../skills/diagram-d
 | Controls by enforcement layer | Governance catalog → Layer stack |
 | Compensating defenses, residual risk | Compensating layers → Layer stack |
 
-**Hard stops:** if a table or paragraph is clearer, do not draw. If you are over the [complexity budget](../skills/diagram-design/SKILL.md) (9 nodes / 12 arrows as the default ceiling), split overview + detail.
+**Hard stops:** if a table or paragraph is clearer, do not draw. If you are over the [complexity budget](../skills/diagram-design-fly/SKILL.md) (9 nodes / 12 arrows as the default ceiling), split overview + detail.
 
-**Size** ([output-spec.md](../skills/diagram-design/references/output-spec.md)): `doc-inline` for docs, `slide-16x9` for decks, `social-og` for cards, `fit` for Figma SVG. Size changes type ramp, not just viewBox.
+**Size** ([output-spec.md](../skills/diagram-design-fly/references/output-spec.md)): `doc-inline` for docs, `slide-16x9` for decks, `social-og` for cards, `fit` for Figma SVG. Size changes type ramp, not just viewBox.
 
-**Motion:** default is static. Load [`animation.md`](../skills/diagram-design/references/animation.md) only when the user asked for motion or ordered change is otherwise unclear.
+**Motion:** default is static. Load [`animation.md`](../skills/diagram-design-fly/references/animation.md) only when the user asked for motion or ordered change is otherwise unclear.
 
 ---
 
@@ -166,19 +166,19 @@ From the clone root:
 
 ```bash
 # macOS / Linux
-open skills/diagram-design/assets/index.html
-xdg-open skills/diagram-design/assets/index.html
+open skills/diagram-design-fly/assets/index.html
+xdg-open skills/diagram-design-fly/assets/index.html
 
 # Windows
-start skills/diagram-design/assets/index.html
+start skills/diagram-design-fly/assets/index.html
 ```
 
 Copy a scaffold, then replace the SVG:
 
 ```bash
-cp skills/diagram-design/assets/template.html my-diagram.html
-cp skills/diagram-design/assets/template-full.html my-diagram.html
-cp skills/diagram-design/assets/template-motion.html my-diagram.html
+cp skills/diagram-design-fly/assets/template.html my-diagram.html
+cp skills/diagram-design-fly/assets/template-full.html my-diagram.html
+cp skills/diagram-design-fly/assets/template-motion.html my-diagram.html
 ```
 
 Shipped examples are `assets/example-<type>.html` plus `-dark` and `-full` variants. Treat them as specimens, not scratch files.
@@ -187,7 +187,7 @@ Shipped examples are `assets/example-<type>.html` plus `-dark` and `-full` varia
 
 ## R6. Import
 
-Load [`import-drawio.md`](../skills/diagram-design/references/import-drawio.md) or [`import-mermaid.md`](../skills/diagram-design/references/import-mermaid.md) and set the four dials **before** redrawing ([output-spec.md](../skills/diagram-design/references/output-spec.md)):
+Load [`import-drawio.md`](../skills/diagram-design-fly/references/import-drawio.md) or [`import-mermaid.md`](../skills/diagram-design-fly/references/import-mermaid.md) and set the four dials **before** redrawing ([output-spec.md](../skills/diagram-design-fly/references/output-spec.md)):
 
 | Dial | Typical values |
 |---|---|
@@ -196,22 +196,22 @@ Load [`import-drawio.md`](../skills/diagram-design/references/import-drawio.md) 
 | Detail | `faithful` · `balanced` · `simplified` |
 | Audience | `engineer` · `mixed` · `executive` |
 
-Slash forms (Claude): `/diagram-design:import-drawio <file>` and `/diagram-design:import-mermaid <file-or-md>`. Always report a **fidelity ledger** (merged, collapsed, dropped). Source coordinates, source palette, and Mermaid auto-layout do not carry over.
+Slash forms (Claude): `/diagram-design-fly:import-drawio <file>` and `/diagram-design-fly:import-mermaid <file-or-md>`. Always report a **fidelity ledger** (merged, collapsed, dropped). Source coordinates, source palette, and Mermaid auto-layout do not carry over.
 
-Extractors in this checkout: `skills/diagram-design/scripts/drawio_extract.py`, `mermaid_extract.py`.
+Extractors in this checkout: `skills/diagram-design-fly/scripts/drawio_extract.py`, `mermaid_extract.py`.
 
 ---
 
 ## R7. Export
 
-**Never export unprompted.** Procedure: [`export.md`](../skills/diagram-design/references/export.md).
+**Never export unprompted.** Procedure: [`export.md`](../skills/diagram-design-fly/references/export.md).
 
 - SVG: first `<svg>` only, XML-escaped Google Fonts `@import`, diagram-only (no full-page cards).
 - PNG: Playwright screenshot of that SVG box, transparent background. Motion HTML: `?motion=static`, wait for `document.fonts.ready`, `data-frame="static"`.
 
 ```
-/diagram-design:export-diagram path/to/diagram.html
-/diagram-design:export-diagram path/to/diagram.html --png-only --scale=2
+/diagram-design-fly:export-diagram path/to/diagram.html
+/diagram-design-fly:export-diagram path/to/diagram.html --png-only --scale=2
 ```
 
 ---
@@ -221,7 +221,7 @@ Extractors in this checkout: `skills/diagram-design/scripts/drawio_extract.py`, 
 After generating HTML in this clone (examples or a file you are contributing):
 
 ```bash
-python skills/diagram-design/scripts/self_check.py path/to/diagram.html
+python skills/diagram-design-fly/scripts/self_check.py path/to/diagram.html
 python scripts/lint-skin.py path/to/diagram.html
 python scripts/verify-geometry.py path/to/diagram.html
 ```
@@ -236,7 +236,7 @@ Copy and fill. Keep one type, one size, one destination.
 
 **Architecture (docs):**
 
-> Draw an architecture diagram of [system]. Nodes: [list ≤9]. Focal: [1–2]. Size `doc-inline`, format HTML. Use the diagram-design skill. Confirm type and cuts before drawing. Save to `[path].html`.
+> Draw an architecture diagram of [system]. Nodes: [list ≤9]. Focal: [1–2]. Size `doc-inline`, format HTML. Use the diagram-design-fly skill. Confirm type and cuts before drawing. Save to `[path].html`.
 
 **Deck:**
 
@@ -248,7 +248,7 @@ Copy and fill. Keep one type, one size, one destination.
 
 **Brand, then diagram:**
 
-> Onboard diagram-design from `https://[site]`. If I approve the tokens, save profile `[slug]` and write `.diagram-design` with `profile: [slug]`. Then draw [type] of [topic].
+> Onboard diagram-design-fly from `https://[site]`. If I approve the tokens, save profile `[slug]` and write `.diagram-design-fly` with `profile: [slug]`. Then draw [type] of [topic].
 
 **Do not:**
 
@@ -260,7 +260,7 @@ Copy and fill. Keep one type, one size, one destination.
 
 | Topic | File |
 |---|---|
-| Philosophy, types, checklist | [`SKILL.md`](../skills/diagram-design/SKILL.md) |
-| Tokens | [`style-guide.md`](../skills/diagram-design/references/style-guide.md) |
+| Philosophy, types, checklist | [`SKILL.md`](../skills/diagram-design-fly/SKILL.md) |
+| Tokens | [`style-guide.md`](../skills/diagram-design-fly/references/style-guide.md) |
 | Settled design decisions | [`docs/adr/`](adr/) |
 | Maintainer validation | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |

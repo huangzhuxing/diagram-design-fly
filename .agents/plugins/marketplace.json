@@ -1,11 +1,11 @@
 {
-  "name": "diagram-design",
+  "name": "diagram-design-fly",
   "interface": {
     "displayName": "Diagram Design"
   },
   "plugins": [
     {
-      "name": "diagram-design",
+      "name": "diagram-design-fly",
       "source": {
         "source": "local",
         "path": "./"

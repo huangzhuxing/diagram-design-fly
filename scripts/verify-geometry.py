@@ -26,7 +26,7 @@ Shape heuristics follow the shipped templates:
 
 Usage:
     python3 scripts/verify-geometry.py --all
-    python3 scripts/verify-geometry.py skills/diagram-design/assets/example-x.html
+    python3 scripts/verify-geometry.py skills/diagram-design-fly/assets/example-x.html
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ASSET_DIR = ROOT / "skills/diagram-design/assets"
+ASSET_DIR = ROOT / "skills/diagram-design-fly/assets"
 
 RECT_RE = re.compile(
     r"<rect\b[^>]*?"

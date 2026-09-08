@@ -8,7 +8,7 @@ Customizing an installed `style-guide.md` supports only one client, creates race
 
 ## Decision
 
-Named profiles are full style-guide snapshots in `~/.diagram-design/profiles/`, with one metadata header naming the active profile. An optional project-root `.diagram-design` marker selects a validated slug and reads that home profile directly; only an explicit markerless load copies a profile into the installed working file. Loads check the current semantic-role and typography schema and backfill missing rows from shipped defaults.
+Named profiles are full style-guide snapshots in `~/.diagram-design-fly/profiles/`, with one metadata header naming the active profile. An optional project-root `.diagram-design-fly` marker selects a validated slug and reads that home profile directly; only an explicit markerless load copies a profile into the installed working file. Loads check the current semantic-role and typography schema and backfill missing rows from shipped defaults.
 
 We rejected in-install profile storage because updates replace it, token-only override merging because agents would have to interpret a versioned merge format, a central path-to-profile index because paths differ across machines and moves, and copy-over-only selection because it preserves the parallel-workspace race.
 

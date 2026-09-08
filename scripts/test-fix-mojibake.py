@@ -18,7 +18,7 @@ def main() -> int:
     # Windows-1252. Byte 0x90 is undefined in CP1252, hence the explicit escape.
     source = "right â†’, left \u00e2\u2020\u0090, up â†‘, down â†“\n"
     expected = "right →, left ←, up ↑, down ↓\n"
-    with tempfile.TemporaryDirectory(prefix="diagram-design-mojibake-") as directory:
+    with tempfile.TemporaryDirectory(prefix="diagram-design-fly-mojibake-") as directory:
         path = Path(directory) / "fixture.md"
         path.write_text(source, encoding="utf-8")
         result = subprocess.run(

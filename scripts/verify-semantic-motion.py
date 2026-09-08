@@ -16,11 +16,13 @@ from urllib.parse import parse_qs, urlparse
 
 
 ROOT = Path(__file__).resolve().parent.parent
-SKILL = ROOT / "skills/diagram-design/SKILL.md"
-PATTERNS = ROOT / "skills/diagram-design/references/semantic-patterns.md"
-ANIMATION = ROOT / "skills/diagram-design/references/animation.md"
-EXAMPLE = ROOT / "skills/diagram-design/assets/example-policy-trace-animated.html"
-MAX_SKILL_BYTES = 40_000
+SKILL = ROOT / "skills/diagram-design-fly/SKILL.md"
+PATTERNS = ROOT / "skills/diagram-design-fly/references/semantic-patterns.md"
+ANIMATION = ROOT / "skills/diagram-design-fly/references/animation.md"
+EXAMPLE = ROOT / "skills/diagram-design-fly/assets/example-policy-trace-animated.html"
+# Raised from 40,000 by ADR 0011 to make room for the `flow` mode's routing.
+# ADR 0004 rule 1 still binds: routing surface is never traded for body prose.
+MAX_SKILL_BYTES = 42_000
 VISUAL_TYPE_COUNT = 39
 
 PATTERN_NAMES = (

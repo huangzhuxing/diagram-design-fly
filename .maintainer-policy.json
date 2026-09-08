@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "repository": "cathrynlavery/diagram-design",
+  "repository": "huangzhuxing/diagram-design-fly",
   "base_branch": "main",
   "default_merge_method": "squash",
   "versioning": {
@@ -46,6 +46,7 @@
       "python3 scripts/test-build-icons-devicon.py",
       "python3 scripts/test-fix-mojibake.py",
       "python3 scripts/lint-skin.py --all --baseline",
+      "python3 scripts/lint-contrast.py --all --baseline",
       "python3 scripts/lint-render.py --self-test",
       "python3 scripts/lint-render.py --all",
       "python3 scripts/test-verify-polar.py",
@@ -86,7 +87,7 @@
       "python3 scripts/test-verify-beeswarm.py",
       "python3 scripts/verify-skin-polarity.py --all",
       "python3 scripts/test-verify-skin-polarity.py",
-      "python3 scripts/build-icons.py && git diff --ignore-space-at-eol --exit-code -- skills/diagram-design/assets/icons.html skills/diagram-design/references/primitive-icons.md"
+      "python3 scripts/build-icons.py && git diff --ignore-space-at-eol --exit-code -- skills/diagram-design-fly/assets/icons.html skills/diagram-design-fly/references/primitive-icons.md"
     ],
     "required_check_names": [],
     "review": {
@@ -129,7 +130,7 @@
   "report": {
     "path": ".context/maintainer/{timestamp}/report.md",
     "live_urls": [
-      "https://cathrynlavery.github.io/diagram-design/"
+      "https://huangzhuxing.github.io/diagram-design-fly/"
     ],
     "require_worklog": true
   }

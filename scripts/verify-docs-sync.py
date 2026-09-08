@@ -35,13 +35,13 @@ from pathlib import Path, PurePosixPath
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
-SKILL = ROOT / "skills/diagram-design/SKILL.md"
-GALLERY = ROOT / "skills/diagram-design/assets/index.html"
-ASSET_DIR = ROOT / "skills/diagram-design/assets"
+SKILL = ROOT / "skills/diagram-design-fly/SKILL.md"
+GALLERY = ROOT / "skills/diagram-design-fly/assets/index.html"
+ASSET_DIR = ROOT / "skills/diagram-design-fly/assets"
 README = ROOT / "README.md"
-HIGH_LEVEL_REFERENCE = ROOT / "skills/diagram-design/references/type-high-level.md"
-ONBOARDING_REFERENCE = ROOT / "skills/diagram-design/references/onboarding.md"
-LINE_DARK_EXAMPLE = ROOT / "skills/diagram-design/assets/example-line-dark.html"
+HIGH_LEVEL_REFERENCE = ROOT / "skills/diagram-design-fly/references/type-high-level.md"
+ONBOARDING_REFERENCE = ROOT / "skills/diagram-design-fly/references/onboarding.md"
+LINE_DARK_EXAMPLE = ROOT / "skills/diagram-design-fly/assets/example-line-dark.html"
 VARIANTS = ("", "-dark", "-full")
 VISUAL_TYPE_COUNT = 39
 AGENT_SKILLS_DESCRIPTION_MAX = 1024
@@ -249,7 +249,7 @@ def check_gallery(errors: list[str]) -> None:
 
 
 def readme_tree_tokens(markdown: str) -> list[str]:
-    blocks = re.findall(r"```\n(diagram-design/\n.*?)```", markdown, re.DOTALL)
+    blocks = re.findall(r"```\n(diagram-design-fly/\n.*?)```", markdown, re.DOTALL)
     tokens: list[str] = []
     for block in blocks:
         tokens.extend(
@@ -349,9 +349,9 @@ def check_packaged_support_references(
 
 def check_routing_surfaces(errors: list[str], root: Path) -> None:
     for relative, reference_link in ROUTING_SURFACES.items():
-        reference = root / "skills/diagram-design" / reference_link
+        reference = root / "skills/diagram-design-fly" / reference_link
         if not reference.is_file():
-            errors.append(f"routing source of truth is missing: skills/diagram-design/{reference_link}")
+            errors.append(f"routing source of truth is missing: skills/diagram-design-fly/{reference_link}")
         path = root / relative
         if not path.is_file():
             errors.append(f"routing surface is missing: {relative.as_posix()}")
@@ -394,7 +394,7 @@ def check_factory_install_surface(errors: list[str], root: Path) -> None:
     architecture_blocks = [
         block
         for block in code_blocks
-        if "diagram-design/" in block and "commands/" in block
+        if "diagram-design-fly/" in block and "commands/" in block
     ]
     native_path_is_documented = any(
         line.lstrip(" │├─└").startswith(native_directory)
@@ -574,8 +574,8 @@ def check_export_font_parity(errors: list[str], root: Path) -> None:
     failure only shows up on a machine other than the author's, which is exactly
     the case the faces are in the link to prevent.
     """
-    template = root / "skills/diagram-design/assets/template.html"
-    export = root / "skills/diagram-design/references/export.md"
+    template = root / "skills/diagram-design-fly/assets/template.html"
+    export = root / "skills/diagram-design-fly/references/export.md"
     for path in (template, export):
         if not path.is_file():
             errors.append(f"font-parity surface is missing: {path.name}")

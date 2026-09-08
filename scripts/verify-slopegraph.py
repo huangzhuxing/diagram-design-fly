@@ -64,7 +64,7 @@ WHAT THIS DOES NOT CHECK, deliberately:
 
 Usage:
     python3 scripts/verify-slopegraph.py --all
-    python3 scripts/verify-slopegraph.py skills/diagram-design/assets/example-slopegraph.html
+    python3 scripts/verify-slopegraph.py skills/diagram-design-fly/assets/example-slopegraph.html
 
 Exit: 0 clean, 1 findings, 2 usage.
 """
@@ -79,7 +79,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ASSET_DIR = ROOT / "skills/diagram-design/assets"
+ASSET_DIR = ROOT / "skills/diagram-design-fly/assets"
 
 LINE_RE = re.compile(r"<line\b(?P<attrs>[^>]*?)/?>", re.IGNORECASE)
 TEXT_RE = re.compile(r"<text\b(?P<attrs>[^>]*)>(?P<body>.*?)</text>", re.IGNORECASE | re.DOTALL)

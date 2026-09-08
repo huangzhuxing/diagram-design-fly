@@ -13,8 +13,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 VERIFIER = ROOT / "scripts/verify-motion.py"
 SEMANTIC_VERIFIER = ROOT / "scripts/verify-semantic-motion.py"
-TEMPLATE = ROOT / "skills/diagram-design/assets/template-motion.html"
-EXAMPLE = ROOT / "skills/diagram-design/assets/example-policy-trace-animated.html"
+TEMPLATE = ROOT / "skills/diagram-design-fly/assets/template-motion.html"
+EXAMPLE = ROOT / "skills/diagram-design-fly/assets/example-policy-trace-animated.html"
 
 
 def load_verifier():

@@ -3,7 +3,7 @@ description: Redraw Mermaid as an editorial diagram at a chosen format, size, an
 argument-hint: "<mermaid-file> [--format=html|svg|png|html+png] [--size=<preset>] [--detail=faithful|balanced|simplified] [--audience=engineer|mixed|executive] [--type=<diagram-type>] [--diagram=N|all] [--variant=light|dark|full] [--output=<path>]"
 ---
 
-Redraw Mermaid source at `$1`. Locate the available `diagram-design` skill using its `SKILL.md` path advertised by Pi. Read that `SKILL.md`, then read `references/import-mermaid.md` and `references/output-spec.md` relative to its directory. Treat those references as the source of truth. Do not assume the package lives under the current working directory.
+Redraw Mermaid source at `$1`. Locate the available `diagram-design-fly` skill using its `SKILL.md` path advertised by Pi. Read that `SKILL.md`, then read `references/import-mermaid.md` and `references/output-spec.md` relative to its directory. Treat those references as the source of truth. Do not assume the package lives under the current working directory.
 
 Full argument string: `$ARGUMENTS`
 

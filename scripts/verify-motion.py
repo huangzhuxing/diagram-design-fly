@@ -11,9 +11,14 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ASSET_DIR = ROOT / "skills/diagram-design/assets"
+ASSET_DIR = ROOT / "skills/diagram-design-fly/assets"
 MOTION_TEMPLATE = ASSET_DIR / "template-motion.html"
-MODES = {"none", "reveal", "step", "loop"}
+MODES = {"none", "reveal", "step", "loop", "flow"}
+# Modes whose motion is continuous rather than stepped. They declare no steps,
+# ship no controller, and are the only places an infinite animation may live.
+CONTINUOUS_MODES = {"loop", "flow"}
+# Modes that must contain no script and expose no playback UI.
+SCRIPT_FREE_MODES = {"none", "loop", "flow"}
 ACTIONS = {"play", "pause", "replay", "prev", "next"}
 ASCII_DECIMAL_RE = re.compile(r"^[0-9]+$")
 
@@ -227,14 +232,21 @@ def hidden_unscoped_motion_selectors(source: str) -> list[str]:
 
 
 def infinite_unscoped_selectors(source: str) -> list[str]:
-    """Find infinite animation rules that are not limited to loop mode."""
+    """Find infinite animation rules not limited to a continuous mode.
+
+    Endless motion is only ever legitimate in a mode that declares it, so the
+    selector has to name one. Scoping is what stops a `.flow-stream` rule
+    pasted into a stepped diagram from quietly animating forever.
+    """
     infinite_declaration = re.compile(
         r"(?:animation\s*:[^;}]*\binfinite\b|"
         r"animation-iteration-count\s*:\s*infinite\b)",
         re.IGNORECASE,
     )
-    loop_scope = re.compile(
-        r"\[\s*data-motion-mode\s*=\s*['\"]loop['\"]\s*\]",
+    continuous_scope = re.compile(
+        r"\[\s*data-motion-mode\s*=\s*['\"](?:"
+        + "|".join(sorted(CONTINUOUS_MODES))
+        + r")['\"]\s*\]",
         re.IGNORECASE,
     )
     findings: list[str] = []
@@ -242,7 +254,7 @@ def infinite_unscoped_selectors(source: str) -> list[str]:
         if not infinite_declaration.search(rule.group(2)):
             continue
         for selector in rule.group(1).split(","):
-            if loop_scope.search(selector) is None:
+            if continuous_scope.search(selector) is None:
                 findings.append(" ".join(selector.split()))
     return findings
 
@@ -290,12 +302,21 @@ def verify(path: Path) -> list[str]:
     if mode not in MODES:
         errors.append(f"data-motion-mode must be one of {sorted(MODES)}; got {mode!r}")
     raw_count = root.get("data-step-count", "")
-    if not ASCII_DECIMAL_RE.fullmatch(raw_count):
+    if mode == "flow":
+        # Flow is continuous: there is no ordered sequence to number. Declaring a
+        # step count here would imply a controller and a narrative that do not
+        # exist, so the attribute is rejected rather than merely ignored.
+        count = 0
+        if raw_count:
+            errors.append(
+                "flow mode is continuous and must not declare data-step-count"
+            )
+    elif not ASCII_DECIMAL_RE.fullmatch(raw_count):
         count = -1
         errors.append("data-step-count must be an ASCII decimal integer")
     else:
         count = int(raw_count)
-    minimum_count = 0 if mode == "none" else 1
+    minimum_count = 0 if mode in {"none", "flow"} else 1
     if count < minimum_count or count > 8:
         errors.append(f"semantic step count must be {minimum_count}..8; got {count}")
 
@@ -353,9 +374,9 @@ def verify(path: Path) -> list[str]:
         if not parser.scripts:
             errors.append("controlled mode needs the scoped control script")
 
-    if mode in {"none", "loop"} and parser.scripts:
+    if mode in SCRIPT_FREE_MODES and parser.scripts:
         errors.append(f"{mode} mode must be script-free")
-    if mode in {"none", "loop"} and (parser.controls or parser.actions or parser.statuses):
+    if mode in SCRIPT_FREE_MODES and (parser.controls or parser.actions or parser.statuses):
         errors.append(f"{mode} mode must not expose playback controls or live status")
     if mode == "loop":
         semantic_count = sum(

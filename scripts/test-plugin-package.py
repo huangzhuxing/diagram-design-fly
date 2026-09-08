@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 VERIFY_SCRIPT = ROOT / "scripts/verify-plugin-package.py"
 BUMP_SCRIPT = ROOT / "scripts/bump-plugin-version.py"
 AUTO_BUMP_WORKFLOW = ROOT / ".github/workflows/auto-bump.yml"
-PLUGIN_NAME = "diagram-design"
+PLUGIN_NAME = "diagram-design-fly"
 
 
 def load_module(name: str, path: Path) -> ModuleType:

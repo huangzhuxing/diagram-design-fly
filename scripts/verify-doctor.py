@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SKILL_RELATIVE = Path("skills/diagram-design/SKILL.md")
+SKILL_RELATIVE = Path("skills/diagram-design-fly/SKILL.md")
 
 MAINTAINER_MARKERS = (
     Path("CONTRIBUTING.md"),
@@ -131,7 +131,7 @@ def check_python_runtime() -> tuple[CheckResult, str | None]:
                     f"Python {major}.{minor}.{patch} found via {command_name} at {executable}; "
                     "Diagram Design requires Python >= 3.10."
                 ),
-                fix="Upgrade Python to 3.10+ and re-run /diagram-design:doctor.",
+                fix="Upgrade Python to 3.10+ and re-run /diagram-design-fly:doctor.",
             ),
             command_name,
         )

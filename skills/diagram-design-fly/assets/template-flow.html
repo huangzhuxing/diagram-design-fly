@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flow diagram template</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --color-paper: #f5f5f5;
+      --color-ink: #2d3142;
+      --color-muted: #4f5d75;
+      --color-soft: #7a8399;
+      --color-accent: #eb6c36;
+      --color-rule: rgba(45,49,66,0.12);
+      --font-sans: 'Geist', system-ui, sans-serif;
+      --font-serif: 'Instrument Serif', 'Noto Serif KR', serif;
+      --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+      /* One clock. Every flow animation derives its period from this cycle. */
+      --flow-cycle: 3.2s;
+      --flow-ease: linear;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 48px 32px;
+      color: var(--color-ink);
+      background: var(--color-paper);
+      font-family: var(--font-sans);
+    }
+    [data-motion-root] { width: min(100%, 1000px); }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--color-muted);
+      font: 500 12px/1.4 var(--font-mono);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0 0 24px; font: 400 32px/1.15 var(--font-serif); }
+    svg { display: block; width: 100%; min-width: 720px; }
+    .legend {
+      margin: 16px 0 0;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-rule);
+      color: var(--color-muted);
+      font: 500 12px/1.5 var(--font-mono);
+    }
+
+    /*
+      FLOW MODE — CSS only, no JavaScript.
+
+      Every flow element is a decorative duplicate laid over a base connector that
+      already carries the static meaning. Deleting the whole flow layer leaves a
+      complete, readable diagram. That is the contract.
+
+      One mechanism drives everything: an animated `stroke-dashoffset` on a path
+      normalised with `pathLength="1"`. Because the path is normalised, the same
+      declaration works on a 60px straight segment and on a 900px bezier, and the
+      loop is seamless whenever the animated distance equals one dash period.
+    */
+
+    /*
+      Conduit: dashes travelling inside the pipe.
+
+      Deliberately NOT normalised with `pathLength`. Dash size has to stay
+      constant in user units, or a 76px connector and a 900px bezier would each
+      be cut into the same number of dashes — tiny stipple on the short run,
+      long strokes on the curve. Real units keep one rhythm everywhere.
+
+      Period is 14 (5 on, 9 off) and the cycle travels 70 = 5 periods, so the
+      loop is seamless and the dashes move at a readable clip.
+    */
+    .flow-stream {
+      fill: none;
+      stroke: var(--color-accent);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-dasharray: 5 9;
+      pointer-events: none;
+    }
+    [data-motion-mode="flow"] .flow-stream {
+      animation: flow-stream var(--flow-cycle) var(--flow-ease) infinite;
+      animation-delay: var(--flow-delay, 0s);
+    }
+    @keyframes flow-stream { to { stroke-dashoffset: -70; } }
+
+    /*
+      Token: a zero-length dash with a round cap renders as a dot. The gap sets
+      how many dots ride the path — `0 1` is one dot, `0 .5` is two, and so on.
+      Animating the offset by exactly one gap moves every dot one full slot.
+    */
+    .flow-token {
+      fill: none;
+      stroke: var(--color-accent);
+      stroke-width: 11;
+      stroke-linecap: round;
+      stroke-dasharray: 0 var(--token-gap, 1);
+      stroke-dashoffset: var(--token-gap, 1);
+      pointer-events: none;
+    }
+    [data-motion-mode="flow"] .flow-token {
+      animation: flow-token var(--flow-cycle) var(--flow-ease) infinite;
+      animation-delay: var(--flow-delay, 0s);
+    }
+    @keyframes flow-token { to { stroke-dashoffset: 0; } }
+
+    /* Halo trailing each token. Same clock, wider and fainter. */
+    .flow-token-halo {
+      stroke-width: 20;
+      opacity: .18;
+    }
+
+    /*
+      Node pulse, phase-locked to the arrival of a token. Base opacity is 0 so
+      that without the animation — wrong mode, print, reduced motion — the ring
+      simply is not there, rather than sitting on the node as a static outline.
+    */
+    .flow-pulse {
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+      pointer-events: none;
+    }
+    [data-motion-mode="flow"] .flow-pulse {
+      animation: flow-pulse var(--flow-cycle) var(--flow-ease) infinite;
+      animation-delay: var(--flow-delay, 0s);
+    }
+    @keyframes flow-pulse {
+      0%, 62% { opacity: 0; transform: scale(.96); }
+      72%     { opacity: .5; transform: scale(1); }
+      100%    { opacity: 0; transform: scale(1.04); }
+    }
+
+    /*
+      OPTIONAL — stage numbers.
+
+      Off unless the root declares `data-flow-sequence="N"` and the markup is
+      present, so copying this template costs nothing until you want them.
+
+      The badge is NOT part of the flow layer. A number is meaning, not
+      decoration: it has to survive print, reduced motion, and static capture,
+      so it lives in the base layer with the nodes.
+
+      Numbers state reading order, not elapsed time. Flow has no beginning —
+      material is in every stage at once. If the point is that one thing happens
+      and then the next, that is `step` mode in animation.md, not this.
+    */
+    .flow-seq circle { fill: #2d3142; stroke: #f5f5f5; stroke-width: 3; }
+    .flow-seq text { fill: #f5f5f5; font: 600 12px/1 'Geist Mono', monospace; text-anchor: middle; dominant-baseline: middle; }
+
+    /*
+      STATIC CONTRACT
+
+      `html[data-motion="static"]`, print, and reduced-motion all resolve to the
+      same complete frame: every semantic element visible, every decorative flow
+      element gone. No JavaScript participates, so a capture tool only has to set
+      one attribute before it screenshots.
+    */
+    html[data-motion="static"] [data-motion-decorative] { display: none !important; }
+    html[data-motion="static"] * {
+      animation: none !important;
+      transition: none !important;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+      }
+      [data-motion-decorative] { display: none !important; }
+    }
+    @media print {
+      body { padding: 0; }
+      [data-motion-decorative] { display: none !important; }
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Replace template-flow in IDs and prose when copying this file. -->
+  <main data-motion-root data-motion-mode="flow" data-flow-cycle="3.2" data-frame="static" data-static-frame="complete">
+    <p class="eyebrow">Data flow · Continuous motion</p>
+    <h1>Ingestion pipeline</h1>
+
+    <svg viewBox="0 0 960 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="template-flow-title template-flow-desc">
+      <title id="template-flow-title">Ingestion pipeline</title>
+      <desc id="template-flow-desc">Sources feed an ingest stage, which hands off to transform. Transform writes to durable store and forwards to serve. Serve returns cache hints to ingest.</desc>
+      <defs>
+        <marker id="template-flow-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/>
+        </marker>
+      </defs>
+      <rect width="960" height="440" fill="#f5f5f5"/>
+
+      <!-- ===== Base layer: complete static meaning, never animated ===== -->
+      <path d="M200 166 H276" fill="none" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#template-flow-arrow)"/>
+      <path d="M436 166 H512" fill="none" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#template-flow-arrow)"/>
+      <path d="M672 166 H748" fill="none" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#template-flow-arrow)"/>
+      <path d="M592 212 V300" fill="none" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#template-flow-arrow)"/>
+      <path d="M828 120 C828 44, 356 44, 356 120" fill="none" stroke="#4f5d75" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#template-flow-arrow)"/>
+
+      <g>
+        <rect x="40" y="120" width="160" height="92" rx="8" fill="#f5f5f5" stroke="#2d3142"/>
+        <text x="120" y="160" text-anchor="middle" fill="#2d3142" font-family="Geist, sans-serif" font-size="16" font-weight="600">Sources</text>
+        <text x="120" y="184" text-anchor="middle" fill="#4f5d75" font-family="Geist Mono, monospace" font-size="12">4 connectors</text>
+      </g>
+      <g>
+        <rect x="276" y="120" width="160" height="92" rx="8" fill="#f5f5f5" stroke="#2d3142"/>
+        <text x="356" y="160" text-anchor="middle" fill="#2d3142" font-family="Geist, sans-serif" font-size="16" font-weight="600">Ingest</text>
+        <text x="356" y="184" text-anchor="middle" fill="#4f5d75" font-family="Geist Mono, monospace" font-size="12">validate · batch</text>
+      </g>
+      <g>
+        <rect x="512" y="120" width="160" height="92" rx="8" fill="rgba(235,108,54,0.08)" stroke="#eb6c36"/>
+        <text x="592" y="160" text-anchor="middle" fill="#2d3142" font-family="Geist, sans-serif" font-size="16" font-weight="600">Transform</text>
+        <text x="592" y="184" text-anchor="middle" fill="#4f5d75" font-family="Geist Mono, monospace" font-size="12">enrich · dedupe</text>
+      </g>
+      <g>
+        <rect x="748" y="120" width="160" height="92" rx="8" fill="#f5f5f5" stroke="#2d3142"/>
+        <text x="828" y="160" text-anchor="middle" fill="#2d3142" font-family="Geist, sans-serif" font-size="16" font-weight="600">Serve</text>
+        <text x="828" y="184" text-anchor="middle" fill="#4f5d75" font-family="Geist Mono, monospace" font-size="12">p99 42ms</text>
+      </g>
+      <g>
+        <rect x="512" y="300" width="160" height="92" rx="8" fill="#f5f5f5" stroke="#2d3142"/>
+        <text x="592" y="340" text-anchor="middle" fill="#2d3142" font-family="Geist, sans-serif" font-size="16" font-weight="600">Store</text>
+        <text x="592" y="364" text-anchor="middle" fill="#4f5d75" font-family="Geist Mono, monospace" font-size="12">append only</text>
+      </g>
+
+      <!-- ===== Flow layer: decorative only, removed for static/print/reduced ===== -->
+      <g data-motion-decorative aria-hidden="true" focusable="false">
+        <!-- Conduits. No pathLength: dash size stays in user units. -->
+        <path class="flow-stream" d="M200 166 H276"/>
+        <path class="flow-stream" style="--flow-delay:-.6s" d="M436 166 H512"/>
+        <path class="flow-stream" style="--flow-delay:-1.2s" d="M672 166 H748"/>
+        <path class="flow-stream" style="--flow-delay:-1.6s" d="M592 212 V300"/>
+        <path class="flow-stream" style="--flow-delay:-2.2s; stroke:#7a8399; stroke-width:2" d="M828 120 C828 44, 356 44, 356 120"/>
+
+        <!-- Tokens. Halo first so the solid dot sits on top. -->
+        <path class="flow-token flow-token-halo" pathLength="1" style="--token-gap:1" d="M200 166 H276"/>
+        <path class="flow-token"                 pathLength="1" style="--token-gap:1" d="M200 166 H276"/>
+
+        <path class="flow-token flow-token-halo" pathLength="1" style="--token-gap:1; --flow-delay:-.6s" d="M436 166 H512"/>
+        <path class="flow-token"                 pathLength="1" style="--token-gap:1; --flow-delay:-.6s" d="M436 166 H512"/>
+
+        <path class="flow-token flow-token-halo" pathLength="1" style="--token-gap:1; --flow-delay:-1.2s" d="M672 166 H748"/>
+        <path class="flow-token"                 pathLength="1" style="--token-gap:1; --flow-delay:-1.2s" d="M672 166 H748"/>
+
+        <!-- Two dots share the branch: gap .5 puts one at each half-slot. -->
+        <path class="flow-token" pathLength="1" style="--token-gap:.5; --flow-delay:-1.6s; stroke-width:9" d="M592 212 V300"/>
+
+        <!-- The feedback bezier proves the mechanism follows curves. -->
+        <path class="flow-token" pathLength="1" style="--token-gap:1; --flow-delay:-2.2s; stroke-width:8; stroke:#7a8399" d="M828 120 C828 44, 356 44, 356 120"/>
+
+        <!-- Arrival pulses, phase-locked to each conduit's delay. -->
+        <rect class="flow-pulse" x="276" y="120" width="160" height="92" rx="8" fill="none" stroke="#eb6c36" stroke-width="2"/>
+        <rect class="flow-pulse" x="512" y="120" width="160" height="92" rx="8" fill="none" stroke="#eb6c36" stroke-width="2" style="--flow-delay:-.6s"/>
+        <rect class="flow-pulse" x="748" y="120" width="160" height="92" rx="8" fill="none" stroke="#eb6c36" stroke-width="2" style="--flow-delay:-1.2s"/>
+        <rect class="flow-pulse" x="512" y="300" width="160" height="92" rx="8" fill="none" stroke="#eb6c36" stroke-width="2" style="--flow-delay:-1.6s"/>
+      </g>
+    </svg>
+
+    <p class="legend">Continuous flow · 3.2s cycle · motion is decorative; the diagram reads complete without it.</p>
+  </main>
+</body>
+</html>

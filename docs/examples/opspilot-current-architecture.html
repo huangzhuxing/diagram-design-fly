@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="OpsPilot 当前代码实现的运行时架构、Go 模块依赖、圆桌状态机、部署方式与能力边界。">
+  <title>OpsPilot 当前项目架构</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --paper: #f5f5f5;
+      --paper-2: #ececec;
+      --ink: #2d3142;
+      --muted: #4f5d75;
+      --soft: #7a8399;
+      --rule: rgba(45,49,66,.12);
+      --rule-solid: #bfc0c0;
+      --accent: #eb6c36;
+      --accent-tint: rgba(235,108,54,.08);
+      --link: #2e5aa8;
+      --sans: 'Geist', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      --serif: 'Instrument Serif', 'Noto Serif SC', 'Songti SC', serif;
+      --mono: 'Geist Mono', ui-monospace, monospace;
+      --flow-cycle: 4s;
+      --flow-ease: linear;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: var(--sans);
+      line-height: 1.65;
+    }
+
+    [data-motion-root] {
+      width: min(100%, 1440px);
+      margin: 0 auto;
+      padding: 64px 48px 48px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
+      gap: 48px;
+      align-items: end;
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font: 500 12px/1.4 var(--mono);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      margin-bottom: 20px;
+      font: 400 56px/1.02 var(--serif);
+      letter-spacing: -.02em;
+    }
+    h1 em { color: var(--accent); font-weight: 400; }
+    .lead {
+      max-width: 800px;
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .fact-stack {
+      display: grid;
+      gap: 12px;
+    }
+    .fact {
+      padding: 16px;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+    }
+    .fact strong { display: block; font-size: 14px; }
+    .fact span { color: var(--muted); font: 400 12px/1.5 var(--mono); }
+
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 24px 0 0;
+    }
+    .toc a {
+      color: var(--muted);
+      text-decoration: none;
+      font: 500 12px/1 var(--mono);
+      padding: 10px 12px;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+    }
+    .toc a:hover { color: var(--ink); border-color: var(--rule-solid); }
+
+    .section {
+      padding: 64px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .section-heading {
+      display: grid;
+      grid-template-columns: minmax(0, .7fr) minmax(320px, 1.3fr);
+      gap: 40px;
+      align-items: end;
+      margin-bottom: 28px;
+    }
+    .section-index {
+      color: var(--accent);
+      font: 500 12px/1.4 var(--mono);
+      letter-spacing: .12em;
+    }
+    h2 {
+      margin-bottom: 0;
+      font: 400 36px/1.1 var(--serif);
+    }
+    .section-copy {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .diagram-scroll {
+      overflow-x: auto;
+      overscroll-behavior-inline: contain;
+    }
+    svg {
+      display: block;
+      width: 100%;
+      min-width: 960px;
+      height: auto;
+    }
+
+    .caption {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font: 400 12px/1.6 var(--mono);
+    }
+    .caption strong { color: var(--ink); font-weight: 600; }
+
+    .insight-grid {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 20px;
+      margin-top: 28px;
+    }
+    .card {
+      padding: 24px;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+    }
+    .card h3 { margin-bottom: 12px; font-size: 17px; }
+    .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+    .card ul { margin: 0; padding-left: 20px; color: var(--muted); }
+    .card li + li { margin-top: 8px; }
+    .card .eyebrow { margin-bottom: 8px; font-size: 10px; }
+    .accent-card { background: var(--accent-tint); border-color: rgba(235,108,54,.35); }
+
+    .matrix {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .matrix th, .matrix td {
+      padding: 16px 20px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--rule);
+    }
+    .matrix tr:last-child td { border-bottom: 0; }
+    .matrix th {
+      color: var(--muted);
+      background: rgba(45,49,66,.025);
+      font: 500 11px/1.4 var(--mono);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .matrix td:first-child { width: 22%; font-weight: 600; }
+    .matrix td:nth-child(2) { width: 34%; }
+    .matrix td { color: var(--muted); font-size: 14px; }
+    code {
+      color: var(--ink);
+      background: rgba(45,49,66,.05);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font: 500 12px/1.4 var(--mono);
+    }
+
+    .boundary-grid {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 20px;
+    }
+    .boundary-list {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .boundary-list li {
+      display: grid;
+      grid-template-columns: 112px 1fr;
+      gap: 16px;
+      padding: 16px 0;
+      border-top: 1px solid var(--rule);
+    }
+    .boundary-list li:first-child { border-top: 0; padding-top: 0; }
+    .boundary-list strong { font-size: 13px; }
+    .boundary-list span { color: var(--muted); font-size: 14px; }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding-top: 32px;
+      color: var(--soft);
+      font: 400 11px/1.5 var(--mono);
+    }
+
+    /* CSS-only flow layer: the base connectors remain a complete static diagram. */
+    .flow-stream {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-dasharray: 5 9;
+      pointer-events: none;
+    }
+    [data-motion-mode="flow"] .flow-stream {
+      animation: opspilot-current-architecture-flow-stream var(--flow-cycle) var(--flow-ease) infinite;
+      animation-delay: var(--flow-delay, 0s);
+    }
+    @keyframes opspilot-current-architecture-flow-stream { to { stroke-dashoffset: -70; } }
+
+    .flow-token {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 9;
+      stroke-linecap: round;
+      stroke-dasharray: 0 var(--token-gap, 1);
+      stroke-dashoffset: var(--token-gap, 1);
+      pointer-events: none;
+    }
+    [data-motion-mode="flow"] .flow-token {
+      animation: opspilot-current-architecture-flow-token var(--flow-cycle) var(--flow-ease) infinite;
+      animation-delay: var(--flow-delay, 0s);
+    }
+    @keyframes opspilot-current-architecture-flow-token { to { stroke-dashoffset: 0; } }
+
+    html[data-motion="static"] [data-motion-decorative] { display: none !important; }
+    html[data-motion="static"] * { animation: none !important; transition: none !important; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+      }
+      [data-motion-decorative] { display: none !important; }
+    }
+    @media print {
+      [data-motion-root] { padding: 0; }
+      [data-motion-decorative] { display: none !important; }
+      * { animation: none !important; transition: none !important; }
+    }
+
+    @media (max-width: 880px) {
+      [data-motion-root] { padding: 40px 20px; }
+      .hero, .section-heading, .insight-grid, .boundary-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 44px; }
+      .caption, footer { flex-direction: column; }
+      .matrix { min-width: 760px; }
+      .matrix-wrap { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main data-motion-root data-motion-mode="flow" data-flow-cycle="4" data-frame="static" data-static-frame="complete">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">OpsPilot · Current implementation · 2026-09-09</p>
+        <h1>当前项目<em>架构</em></h1>
+        <p class="lead">这是对仓库当前代码的实现级描述：React / vinext 控制台通过一个双模式状态适配器连接 Go 模块化单体，所有领域服务围绕统一 Repository 接口读写工作区状态；MongoDB 生产演示模式与进程内 Memory 模式共享同一领域模型。</p>
+      </div>
+      <div class="fact-stack" aria-label="架构摘要">
+        <div class="fact"><strong>前端：双模式客户端</strong><span>REMOTE API · OFFLINE DEMO</span></div>
+        <div class="fact"><strong>后端：Go 模块化单体</strong><span>NET/HTTP · DOMAIN SERVICES</span></div>
+        <div class="fact"><strong>数据：统一状态文档</strong><span>MONGO SINGLETON · MEMORY CLONE</span></div>
+      </div>
+    </header>
+
+    <nav class="toc" aria-label="文档目录">
+      <a href="#runtime">01 运行时总览</a>
+      <a href="#modules">02 模块依赖</a>
+      <a href="#state-machine">03 圆桌状态机</a>
+      <a href="#interfaces">04 接口与数据</a>
+      <a href="#deployment">05 部署与边界</a>
+    </nav>
+
+    <section class="section" id="runtime">
+      <div class="section-heading">
+        <div>
+          <span class="section-index">01 / RUNTIME</span>
+          <h2>运行时总览</h2>
+        </div>
+        <p class="section-copy">浏览器不会直接操作任何领域对象。所有交互先进入 <code>useSreState</code>：配置了 <code>NEXT_PUBLIC_API_URL</code> 时调用 Go API；未配置或连接失败时，使用前端内置状态机完成可交互演示。</p>
+      </div>
+
+      <div class="diagram-scroll">
+        <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="opspilot-runtime-title opspilot-runtime-desc">
+          <title id="opspilot-runtime-title">OpsPilot 当前运行时架构</title>
+          <desc id="opspilot-runtime-desc">浏览器中的 React 控制台通过 useSreState 选择离线演示状态或 Go HTTP API；Go API 调用领域服务、Harness Loop 和圆桌门禁，最终经 Repository 接口写入 MongoDB 单文档或进程内内存状态。</desc>
+          <defs>
+            <marker id="opspilot-runtime-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+            <marker id="opspilot-runtime-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+            <marker id="opspilot-runtime-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+          </defs>
+
+          <rect width="1280" height="720" fill="#f5f5f5"/>
+
+          <!-- Zones -->
+          <rect x="40" y="48" width="300" height="520" rx="8" fill="rgba(45,49,66,.02)" stroke="rgba(45,49,66,.10)" stroke-width=".8"/>
+          <rect x="56" y="52" width="96" height="16" rx="4" fill="#f5f5f5"/>
+          <text x="104" y="64" text-anchor="middle" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="500">浏览器运行时</text>
+
+          <rect x="368" y="48" width="552" height="520" rx="8" fill="rgba(45,49,66,.02)" stroke="rgba(45,49,66,.10)" stroke-width=".8"/>
+          <rect x="384" y="52" width="96" height="16" rx="4" fill="#f5f5f5"/>
+          <text x="432" y="64" text-anchor="middle" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="500">Go 服务进程</text>
+
+          <rect x="948" y="48" width="292" height="520" rx="8" fill="rgba(45,49,66,.02)" stroke="rgba(45,49,66,.10)" stroke-width=".8"/>
+          <rect x="964" y="52" width="96" height="16" rx="4" fill="#f5f5f5"/>
+          <text x="1012" y="64" text-anchor="middle" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="500">状态与持久化</text>
+
+          <!-- Base connectors -->
+          <line x1="188" y1="176" x2="188" y2="244" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-runtime-arrow)"/>
+          <line x1="188" y1="340" x2="188" y2="432" stroke="#7a8399" stroke-width="1" stroke-dasharray="5 4" marker-end="url(#opspilot-runtime-arrow)"/>
+          <path d="M300 284 H348 Q356 284 356 276 V148 Q356 140 364 140 H416" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#opspilot-runtime-arrow-link)"/>
+          <rect x="368" y="204" width="72" height="12" rx="4" fill="#f5f5f5"/>
+          <text x="404" y="212" text-anchor="middle" fill="#2e5aa8" font-family="'Geist Mono',monospace" font-size="8" letter-spacing=".06em">FETCH /API</text>
+          <line x1="524" y1="176" x2="524" y2="244" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-runtime-arrow)"/>
+          <path d="M600 244 V204 Q600 196 608 196 H720 Q728 196 728 188 V176" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-runtime-arrow)"/>
+          <line x1="636" y1="300" x2="680" y2="300" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-runtime-arrow)"/>
+          <path d="M636 332 V392 Q636 400 644 400 H956 Q964 400 964 392 V248 Q964 240 972 240 H996" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-runtime-arrow)"/>
+          <path d="M880 140 H932 Q940 140 940 148 V192 Q940 200 948 200 H996" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-runtime-arrow)"/>
+          <path d="M880 284 H916 Q924 284 924 276 V240 Q924 232 932 232 H996" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-runtime-arrow)"/>
+          <line x1="1092" y1="256" x2="1092" y2="384" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-runtime-arrow)"/>
+          <rect x="1108" y="372" width="88" height="12" rx="4" fill="#f5f5f5"/>
+          <text x="1152" y="380" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8" letter-spacing=".06em">GET / UPDATE</text>
+
+          <!-- Nodes -->
+          <g>
+            <rect x="80" y="104" width="220" height="72" rx="8" fill="#f5f5f5"/>
+            <rect x="80" y="104" width="220" height="72" rx="8" fill="#fff" stroke="#2d3142"/>
+            <rect x="92" y="116" width="40" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.4)" stroke-width=".8"/>
+            <text x="112" y="128" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">UI</text>
+            <text x="188" y="140" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">React 控制台</text>
+            <text x="188" y="160" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">5 VIEWS · APP SHELL</text>
+          </g>
+
+          <g>
+            <rect x="80" y="244" width="220" height="96" rx="8" fill="#f5f5f5"/>
+            <rect x="80" y="244" width="220" height="96" rx="8" fill="#fff" stroke="#2d3142"/>
+            <rect x="92" y="256" width="48" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.4)" stroke-width=".8"/>
+            <text x="116" y="268" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">HOOK</text>
+            <text x="188" y="288" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">useSreState</text>
+            <text x="188" y="308" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">REMOTE / FALLBACK</text>
+            <text x="188" y="324" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">INITIAL REFRESH + ACTIONS</text>
+          </g>
+
+          <g>
+            <rect x="80" y="432" width="220" height="80" rx="8" fill="#f5f5f5"/>
+            <rect x="80" y="432" width="220" height="80" rx="8" fill="rgba(45,49,66,.02)" stroke="rgba(45,49,66,.25)" stroke-dasharray="4 3"/>
+            <rect x="92" y="444" width="48" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.3)" stroke-width=".8"/>
+            <text x="116" y="456" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">DEMO</text>
+            <text x="188" y="476" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">前端演示状态机</text>
+            <text x="188" y="496" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">demoState · local transitions</text>
+          </g>
+
+          <g>
+            <rect x="416" y="104" width="220" height="72" rx="8" fill="#f5f5f5"/>
+            <rect x="416" y="104" width="220" height="72" rx="8" fill="#fff" stroke="#2e5aa8"/>
+            <rect x="428" y="116" width="40" height="16" rx="4" fill="none" stroke="rgba(46,90,168,.4)" stroke-width=".8"/>
+            <text x="448" y="128" text-anchor="middle" fill="#2e5aa8" font-family="'Geist Mono',monospace" font-size="8">API</text>
+            <text x="524" y="140" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">net/http 路由层</text>
+            <text x="524" y="160" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">18 ROUTES · CORS · LOGGING</text>
+          </g>
+
+          <g>
+            <rect x="416" y="244" width="220" height="112" rx="8" fill="#f5f5f5"/>
+            <rect x="416" y="244" width="220" height="112" rx="8" fill="#fff" stroke="#2d3142"/>
+            <rect x="428" y="256" width="64" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.4)" stroke-width=".8"/>
+            <text x="460" y="268" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">DOMAIN</text>
+            <text x="524" y="292" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">领域服务组</text>
+            <text x="524" y="312" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">CMDB · MONITORING · INCIDENT</text>
+            <text x="524" y="328" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">KNOWLEDGE · ROUNDTABLE</text>
+            <text x="524" y="344" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">PURE GO MODULES</text>
+          </g>
+
+          <g>
+            <rect x="680" y="104" width="200" height="72" rx="8" fill="#f5f5f5"/>
+            <rect x="680" y="104" width="200" height="72" rx="8" fill="rgba(235,108,54,.08)" stroke="#eb6c36"/>
+            <rect x="692" y="116" width="48" height="16" rx="4" fill="none" stroke="rgba(235,108,54,.45)" stroke-width=".8"/>
+            <text x="716" y="128" text-anchor="middle" fill="#eb6c36" font-family="'Geist Mono',monospace" font-size="8">LOOP</text>
+            <text x="780" y="140" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">Harness / Loop</text>
+            <text x="780" y="160" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">MAX ITERATIONS · REFLECT</text>
+          </g>
+
+          <g>
+            <rect x="680" y="244" width="200" height="112" rx="8" fill="#f5f5f5"/>
+            <rect x="680" y="244" width="200" height="112" rx="8" fill="rgba(235,108,54,.05)" stroke="rgba(235,108,54,.5)" stroke-dasharray="4 4"/>
+            <rect x="692" y="256" width="48" height="16" rx="4" fill="none" stroke="rgba(235,108,54,.4)" stroke-width=".8"/>
+            <text x="716" y="268" text-anchor="middle" fill="#eb6c36" font-family="'Geist Mono',monospace" font-size="8">GATE</text>
+            <text x="780" y="292" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">圆桌与双重门禁</text>
+            <text x="780" y="312" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">COUNCIL · WORK ORDER</text>
+            <text x="780" y="328" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">DUAL CONTROL</text>
+            <text x="780" y="344" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">SIMULATED EXECUTION</text>
+          </g>
+
+          <g>
+            <rect x="996" y="176" width="196" height="80" rx="8" fill="#f5f5f5"/>
+            <rect x="996" y="176" width="196" height="80" rx="8" fill="#fff" stroke="#2d3142"/>
+            <rect x="1008" y="188" width="48" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.4)" stroke-width=".8"/>
+            <text x="1032" y="200" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">PORT</text>
+            <text x="1092" y="220" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">Repository 接口</text>
+            <text x="1092" y="240" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">GET · UPDATE · CLOSE</text>
+          </g>
+
+          <g>
+            <rect x="996" y="384" width="196" height="96" rx="8" fill="#f5f5f5"/>
+            <rect x="996" y="384" width="196" height="96" rx="8" fill="rgba(45,49,66,.05)" stroke="#4f5d75"/>
+            <rect x="1008" y="396" width="48" height="16" rx="4" fill="none" stroke="rgba(79,93,117,.45)" stroke-width=".8"/>
+            <text x="1032" y="408" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">STORE</text>
+            <text x="1092" y="432" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">MongoDB / Memory</text>
+            <text x="1092" y="452" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">workspace_state / singleton</text>
+            <text x="1092" y="468" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">FULL STATE REPLACEMENT</text>
+          </g>
+
+          <!-- Decorative flow layer: 4 of the page-wide 8-connector budget. -->
+          <g data-motion-decorative aria-hidden="true" focusable="false">
+            <path class="flow-stream" style="stroke:#2e5aa8" d="M300 284 H348 Q356 284 356 276 V148 Q356 140 364 140 H416"/>
+            <path class="flow-token" pathLength="1" style="--token-gap:1; stroke:#2e5aa8" d="M300 284 H348 Q356 284 356 276 V148 Q356 140 364 140 H416"/>
+            <path class="flow-stream" style="--flow-delay:-.8s" d="M524 176 V244"/>
+            <path class="flow-token" pathLength="1" style="--token-gap:1; --flow-delay:-.8s" d="M524 176 V244"/>
+            <path class="flow-stream" style="--flow-delay:-1.6s" d="M636 332 V392 Q636 400 644 400 H956 Q964 400 964 392 V248 Q964 240 972 240 H996"/>
+            <path class="flow-token" pathLength="1" style="--token-gap:1; --flow-delay:-1.6s" d="M636 332 V392 Q636 400 644 400 H956 Q964 400 964 392 V248 Q964 240 972 240 H996"/>
+            <path class="flow-stream" style="--flow-delay:-2.4s" d="M1092 256 V384"/>
+            <path class="flow-token" pathLength="1" style="--token-gap:1; --flow-delay:-2.4s" d="M1092 256 V384"/>
+          </g>
+
+          <!-- Bottom legend strip -->
+          <line x1="40" y1="624" x2="1240" y2="624" stroke="rgba(45,49,66,.12)" stroke-width=".8"/>
+          <text x="40" y="652" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8" letter-spacing=".14em">LEGEND</text>
+          <rect x="160" y="640" width="20" height="16" rx="4" fill="#fff" stroke="#2d3142"/>
+          <text x="192" y="652" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">现有组件</text>
+          <rect x="308" y="640" width="20" height="16" rx="4" fill="rgba(235,108,54,.08)" stroke="#eb6c36"/>
+          <text x="340" y="652" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">核心循环</text>
+          <rect x="456" y="640" width="20" height="16" rx="4" fill="rgba(45,49,66,.02)" stroke="#7a8399" stroke-dasharray="4 3"/>
+          <text x="488" y="652" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">演示或可选路径</text>
+          <line x1="676" y1="648" x2="724" y2="648" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#opspilot-runtime-arrow-link)"/>
+          <text x="740" y="652" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">HTTP/API 调用</text>
+        </svg>
+      </div>
+
+      <p class="caption"><span><strong>主路径：</strong>UI action → API route → domain mutation → Repository → store</span><span>连续流动仅提示方向；静态与打印版信息完整</span></p>
+
+      <div class="insight-grid">
+        <article class="card">
+          <p class="eyebrow">Read model</p>
+          <h3>前端以完整工作区状态为主读模型</h3>
+          <p>远程模式通过 <code>GET /api/state</code> 获取整份 <code>domain.State</code>；动作接口只返回局部结果，采集、拉取和经验召回后由客户端再次刷新完整状态。当前没有 WebSocket、SSE 或固定周期轮询。</p>
+        </article>
+        <article class="card accent-card">
+          <p class="eyebrow">Important boundary</p>
+          <h3>“离线 Demo”是完整的第二条执行路径</h3>
+          <p>连接失败不会进入只读态，而是由 TypeScript 在浏览器中复制圆桌、采集、信号和经验状态迁移。它适合产品演示，但不是后端行为的一致性证明。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="modules">
+      <div class="section-heading">
+        <div>
+          <span class="section-index">02 / DEPENDENCIES</span>
+          <h2>Go 模块依赖</h2>
+        </div>
+        <p class="section-copy">后端是单进程、单二进制的模块化单体。<code>httpapi.Server</code> 只负责协议适配和错误映射；领域能力拆为包，并通过共享的 <code>repository.Repository</code> 汇聚到同一状态边界。</p>
+      </div>
+
+      <div class="diagram-scroll">
+        <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="opspilot-dependency-title opspilot-dependency-desc">
+          <title id="opspilot-dependency-title">OpsPilot Go 后端模块依赖图</title>
+          <desc id="opspilot-dependency-desc">cmd server 组装 HTTP API 和 CMDB 调度器；HTTP API 依赖五组领域服务；事件分析额外依赖 Agent Harness 和知识召回；五个模块最终汇聚到 Repository 接口。</desc>
+          <defs>
+            <marker id="opspilot-dependency-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+            <marker id="opspilot-dependency-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+            <marker id="opspilot-dependency-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+          </defs>
+          <rect width="1280" height="720" fill="#f5f5f5"/>
+
+          <!-- Rank guides -->
+          <text x="72" y="148" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8" letter-spacing=".12em">RANK 0 · COMPOSITION</text>
+          <text x="72" y="224" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8" letter-spacing=".12em">RANK 1 · TRANSPORT</text>
+          <text x="72" y="288" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8" letter-spacing=".12em">RANK 2 · DOMAIN</text>
+          <text x="72" y="568" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8" letter-spacing=".12em">RANK 3 · SHARED CORE</text>
+
+          <!-- Base connectors: dependents point to dependencies. -->
+          <line x1="640" y1="128" x2="640" y2="176" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+          <path d="M552 96 H56 Q48 96 48 104 V328 Q48 336 56 336 H80" fill="none" stroke="#7a8399" stroke-width="1" stroke-dasharray="5 4" marker-end="url(#opspilot-dependency-arrow)"/>
+          <rect x="240" y="76" width="96" height="12" rx="4" fill="#f5f5f5"/>
+          <text x="288" y="84" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8" letter-spacing=".06em">START SCHEDULER</text>
+
+          <path d="M580 240 V252 Q580 260 572 260 H176 Q168 260 168 268 V304" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+          <path d="M608 240 V268 Q608 276 600 276 H400 Q392 276 392 284 V304" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+          <path d="M640 240 V284 Q640 292 632 292 H624 Q616 292 616 300 V304" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+          <path d="M668 240 V268 Q668 276 676 276 H832 Q840 276 840 284 V304" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+          <path d="M696 240 V252 Q696 260 704 260 H1056 Q1064 260 1064 268 V304" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+
+          <path d="M168 368 V400 Q168 408 176 408 H672 Q680 408 680 416 V472 Q680 480 688 480" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+          <path d="M392 368 V424 Q392 432 400 432 H648 Q656 432 656 440 V504 Q656 512 664 512 H688" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+          <path d="M616 368 V392 Q616 400 608 400 H512 Q504 400 504 408 V464" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+          <line x1="704" y1="336" x2="752" y2="336" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+          <path d="M840 368 V416 Q840 424 832 424 H760 Q752 424 752 432 V464" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+          <path d="M1064 368 V408 Q1064 416 1056 416 H888 Q880 416 880 424 V472 Q880 480 872 480 H864" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+          <line x1="592" y1="496" x2="688" y2="496" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-dependency-arrow)"/>
+
+          <!-- Nodes -->
+          <g>
+            <rect x="552" y="64" width="176" height="64" rx="8" fill="#f5f5f5"/>
+            <rect x="552" y="64" width="176" height="64" rx="8" fill="#fff" stroke="#2d3142"/>
+            <rect x="564" y="76" width="36" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.35)" stroke-width=".8"/><text x="582" y="88" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">CMD</text>
+            <rect x="680" y="76" width="36" height="16" rx="4" fill="rgba(45,49,66,.05)"/><text x="698" y="88" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">0 in</text>
+            <text x="640" y="104" text-anchor="middle" fill="#2d3142" font-family="'Geist',sans-serif" font-size="12" font-weight="600">cmd/server</text>
+            <text x="640" y="120" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">composition root</text>
+          </g>
+
+          <g>
+            <rect x="552" y="176" width="176" height="64" rx="8" fill="#f5f5f5"/>
+            <rect x="552" y="176" width="176" height="64" rx="8" fill="#fff" stroke="#2d3142"/>
+            <rect x="564" y="188" width="36" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.35)" stroke-width=".8"/><text x="582" y="200" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">HTTP</text>
+            <rect x="680" y="188" width="36" height="16" rx="4" fill="rgba(45,49,66,.05)"/><text x="698" y="200" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">1 in</text>
+            <text x="640" y="216" text-anchor="middle" fill="#2d3142" font-family="'Geist',sans-serif" font-size="12" font-weight="600">httpapi.Server</text>
+            <text x="640" y="232" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">route orchestration</text>
+          </g>
+
+          <g>
+            <rect x="80" y="304" width="176" height="64" rx="8" fill="#f5f5f5"/>
+            <rect x="80" y="304" width="176" height="64" rx="8" fill="#fff" stroke="#2d3142"/>
+            <rect x="92" y="316" width="44" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.35)" stroke-width=".8"/><text x="114" y="328" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">CMDB</text>
+            <rect x="208" y="316" width="36" height="16" rx="4" fill="rgba(45,49,66,.05)"/><text x="226" y="328" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">2 in</text>
+            <text x="168" y="348" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">采集与目录</text>
+            <text x="168" y="364" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">collector · catalog</text>
+          </g>
+
+          <g>
+            <rect x="304" y="304" width="176" height="64" rx="8" fill="#f5f5f5"/>
+            <rect x="304" y="304" width="176" height="64" rx="8" fill="#fff" stroke="#2d3142"/>
+            <rect x="316" y="316" width="44" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.35)" stroke-width=".8"/><text x="338" y="328" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">MON</text>
+            <rect x="432" y="316" width="36" height="16" rx="4" fill="rgba(45,49,66,.05)"/><text x="450" y="328" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">1 in</text>
+            <text x="392" y="348" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">信号决策</text>
+            <text x="392" y="364" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">ingest · pull · dedupe</text>
+          </g>
+
+          <g>
+            <rect x="528" y="304" width="176" height="64" rx="8" fill="#f5f5f5"/>
+            <rect x="528" y="304" width="176" height="64" rx="8" fill="#fff" stroke="#2d3142"/>
+            <rect x="540" y="316" width="44" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.35)" stroke-width=".8"/><text x="562" y="328" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">RCA</text>
+            <rect x="656" y="316" width="36" height="16" rx="4" fill="rgba(45,49,66,.05)"/><text x="674" y="328" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">1 in</text>
+            <text x="616" y="348" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">异步事件分析</text>
+            <text x="616" y="364" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">goroutine · analysisTask</text>
+          </g>
+
+          <g>
+            <rect x="752" y="304" width="176" height="64" rx="8" fill="#f5f5f5"/>
+            <rect x="752" y="304" width="176" height="64" rx="8" fill="#fff" stroke="#2d3142"/>
+            <rect x="764" y="316" width="44" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.35)" stroke-width=".8"/><text x="786" y="328" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">KNOW</text>
+            <rect x="880" y="316" width="36" height="16" rx="4" fill="rgba(45,49,66,.05)"/><text x="898" y="328" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">2 in</text>
+            <text x="840" y="348" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">经验检索</text>
+            <text x="840" y="364" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">token rank · reuse count</text>
+          </g>
+
+          <g>
+            <rect x="976" y="304" width="176" height="64" rx="8" fill="#f5f5f5"/>
+            <rect x="976" y="304" width="176" height="64" rx="8" fill="#fff" stroke="#2d3142"/>
+            <rect x="988" y="316" width="44" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.35)" stroke-width=".8"/><text x="1010" y="328" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">GATE</text>
+            <rect x="1104" y="316" width="36" height="16" rx="4" fill="rgba(45,49,66,.05)"/><text x="1122" y="328" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">1 in</text>
+            <text x="1064" y="348" text-anchor="middle" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">圆桌控制</text>
+            <text x="1064" y="364" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">council · dual control</text>
+          </g>
+
+          <g>
+            <rect x="416" y="464" width="176" height="64" rx="8" fill="#f5f5f5"/>
+            <rect x="416" y="464" width="176" height="64" rx="8" fill="rgba(45,49,66,.05)" stroke="#4f5d75"/>
+            <rect x="428" y="476" width="44" height="16" rx="4" fill="none" stroke="rgba(79,93,117,.4)" stroke-width=".8"/><text x="450" y="488" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">LOOP</text>
+            <rect x="544" y="476" width="36" height="16" rx="4" fill="rgba(45,49,66,.08)"/><text x="562" y="488" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">1 in</text>
+            <text x="504" y="508" text-anchor="middle" fill="#2d3142" font-family="'Geist',sans-serif" font-size="12" font-weight="600">agent.Harness</text>
+            <text x="504" y="524" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">observe → reflect</text>
+          </g>
+
+          <g>
+            <rect x="688" y="464" width="176" height="64" rx="8" fill="#f5f5f5"/>
+            <rect x="688" y="464" width="176" height="64" rx="8" fill="rgba(45,49,66,.05)" stroke="#2d3142" stroke-width="1.2"/>
+            <rect x="700" y="476" width="44" height="16" rx="4" fill="none" stroke="rgba(45,49,66,.4)" stroke-width=".8"/><text x="722" y="488" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">REPO</text>
+            <rect x="816" y="476" width="36" height="16" rx="4" fill="rgba(45,49,66,.1)"/><text x="834" y="488" text-anchor="middle" fill="#2d3142" font-family="'Geist Mono',monospace" font-size="8">5 in</text>
+            <text x="776" y="508" text-anchor="middle" fill="#2d3142" font-family="'Geist',sans-serif" font-size="12" font-weight="600">repository.Repository</text>
+            <text x="776" y="524" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">shared state boundary</text>
+          </g>
+
+          <line x1="40" y1="624" x2="1240" y2="624" stroke="rgba(45,49,66,.12)" stroke-width=".8"/>
+          <text x="40" y="652" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8" letter-spacing=".14em">LEGEND</text>
+          <text x="160" y="652" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">箭头：依赖方向</text>
+          <rect x="332" y="640" width="36" height="16" rx="4" fill="rgba(45,49,66,.08)"/><text x="350" y="652" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">N in</text>
+          <text x="384" y="652" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">入度：多少模块依赖它</text>
+          <line x1="620" y1="648" x2="676" y2="648" stroke="#7a8399" stroke-dasharray="5 4" marker-end="url(#opspilot-dependency-arrow)"/>
+          <text x="692" y="652" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">启动时调度依赖</text>
+        </svg>
+      </div>
+
+      <p class="caption"><span><strong>结构中心：</strong><code>repository.Repository</code> 是最高扇入点</span><span>9 个包级节点 · 14 条显式依赖</span></p>
+    </section>
+
+    <section class="section" id="state-machine">
+      <div class="section-heading">
+        <div>
+          <span class="section-index">03 / STATE MACHINE</span>
+          <h2>圆桌变更状态机</h2>
+        </div>
+        <p class="section-copy">当前高风险变更控制不是自由对话，而是由后端 <code>roundtable.Service</code> 强制执行的有限状态机。每个写动作都通过 Repository 的单次 Update 闭包完成，非法阶段统一映射为 HTTP 409。</p>
+      </div>
+
+      <div class="diagram-scroll">
+        <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="opspilot-state-title opspilot-state-desc">
+          <title id="opspilot-state-title">OpsPilot 圆桌变更控制状态机</title>
+          <desc id="opspilot-state-desc">圆桌从 discussion 进入 consensus，创建工单后等待审批，再逐步执行；中间步骤保持 executing，最后一步通过执行与复核双门禁后进入 closed 并沉淀经验。</desc>
+          <defs>
+            <marker id="opspilot-state-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+            <marker id="opspilot-state-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+            <marker id="opspilot-state-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+          </defs>
+          <rect width="1280" height="720" fill="#f5f5f5"/>
+
+          <!-- Base transitions -->
+          <circle cx="40" cy="280" r="8" fill="#2d3142"/>
+          <line x1="48" y1="280" x2="80" y2="280" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-state-arrow)"/>
+          <line x1="240" y1="280" x2="304" y2="280" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-state-arrow)"/>
+          <rect x="244" y="248" width="56" height="12" rx="4" fill="#f5f5f5"/><text x="272" y="256" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">REVIEW ALL</text>
+          <line x1="464" y1="280" x2="528" y2="280" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-state-arrow)"/>
+          <rect x="468" y="248" width="56" height="12" rx="4" fill="#f5f5f5"/><text x="496" y="256" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">CREATE CHG</text>
+          <line x1="688" y1="280" x2="752" y2="280" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-state-arrow)"/>
+          <rect x="692" y="248" width="56" height="12" rx="4" fill="#f5f5f5"/><text x="720" y="256" text-anchor="middle" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8">APPROVE</text>
+          <line x1="912" y1="280" x2="976" y2="280" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#opspilot-state-arrow-accent)"/>
+          <rect x="916" y="248" width="56" height="12" rx="4" fill="#f5f5f5"/><text x="944" y="256" text-anchor="middle" fill="#eb6c36" font-family="'Geist Mono',monospace" font-size="8">LAST STEP</text>
+          <path d="M792 236 V188 Q792 180 800 180 H864 Q872 180 872 188 V236" fill="none" stroke="#7a8399" stroke-width="1" stroke-dasharray="5 4" marker-end="url(#opspilot-state-arrow)"/>
+          <rect x="792" y="156" width="80" height="12" rx="4" fill="#f5f5f5"/><text x="832" y="164" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">MORE STEPS</text>
+          <line x1="1136" y1="280" x2="1192" y2="280" stroke="#4f5d75" stroke-width="1.2"/>
+          <circle cx="1200" cy="280" r="8" fill="none" stroke="#2d3142" stroke-width="1.2"/>
+          <circle cx="1200" cy="280" r="4" fill="#2d3142"/>
+
+          <!-- States -->
+          <g>
+            <rect x="80" y="236" width="160" height="88" rx="8" fill="#f5f5f5"/>
+            <rect x="80" y="236" width="160" height="88" rx="8" fill="#fff" stroke="#2d3142"/>
+            <text x="160" y="272" text-anchor="middle" fill="#2d3142" font-family="'Geist',sans-serif" font-size="12" font-weight="600">discussion</text>
+            <text x="160" y="292" text-anchor="middle" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">四角色独立评审</text>
+            <text x="160" y="312" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">Council.Review</text>
+          </g>
+          <g>
+            <rect x="304" y="236" width="160" height="88" rx="8" fill="#f5f5f5"/>
+            <rect x="304" y="236" width="160" height="88" rx="8" fill="#fff" stroke="#2d3142"/>
+            <text x="384" y="272" text-anchor="middle" fill="#2d3142" font-family="'Geist',sans-serif" font-size="12" font-weight="600">consensus</text>
+            <text x="384" y="292" text-anchor="middle" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">必须 100% 通过</text>
+            <text x="384" y="312" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">plan frozen</text>
+          </g>
+          <g>
+            <rect x="528" y="236" width="160" height="88" rx="8" fill="#f5f5f5"/>
+            <rect x="528" y="236" width="160" height="88" rx="8" fill="#fff" stroke="#2d3142"/>
+            <text x="608" y="272" text-anchor="middle" fill="#2d3142" font-family="'Geist',sans-serif" font-size="12" font-weight="600">awaiting_approval</text>
+            <text x="608" y="292" text-anchor="middle" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">工单状态 pending</text>
+            <text x="608" y="312" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">CHG-2048</text>
+          </g>
+          <g>
+            <rect x="752" y="236" width="160" height="88" rx="8" fill="#f5f5f5"/>
+            <rect x="752" y="236" width="160" height="88" rx="8" fill="#fff" stroke="#2d3142"/>
+            <text x="832" y="272" text-anchor="middle" fill="#2d3142" font-family="'Geist',sans-serif" font-size="12" font-weight="600">executing</text>
+            <text x="832" y="292" text-anchor="middle" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">逐步执行与复核</text>
+            <text x="832" y="312" text-anchor="middle" fill="#7a8399" font-family="'Geist Mono',monospace" font-size="8">DualControl</text>
+          </g>
+          <g>
+            <rect x="976" y="236" width="160" height="88" rx="8" fill="#f5f5f5"/>
+            <rect x="976" y="236" width="160" height="88" rx="8" fill="rgba(235,108,54,.08)" stroke="#eb6c36"/>
+            <text x="1056" y="272" text-anchor="middle" fill="#2d3142" font-family="'Geist',sans-serif" font-size="12" font-weight="600">closed</text>
+            <text x="1056" y="292" text-anchor="middle" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">关闭工单并沉淀经验</text>
+            <text x="1056" y="312" text-anchor="middle" fill="#eb6c36" font-family="'Geist Mono',monospace" font-size="8">experience persisted</text>
+          </g>
+
+          <!-- Guard annotations -->
+          <line x1="80" y1="416" x2="1136" y2="416" stroke="rgba(45,49,66,.12)" stroke-width=".8"/>
+          <text x="80" y="448" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8" letter-spacing=".12em">GUARDS</text>
+          <text x="80" y="480" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">共识门禁</text>
+          <text x="80" y="504" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">窗口无冲突 · 每步可执行且可回滚 · 步骤唯一 · 指定审批人 · 存在备份或快照</text>
+          <text x="80" y="544" fill="#2d3142" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12" font-weight="600">执行门禁</text>
+          <text x="80" y="568" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">命令非空 → 生成模拟执行证据 → 回滚动作非空 → observedStatus 必须为 healthy</text>
+
+          <!-- Decorative flow layer: 4 transitions, page total = 8. -->
+          <g data-motion-decorative aria-hidden="true" focusable="false">
+            <path class="flow-stream" d="M240 280 H304"/>
+            <path class="flow-token" pathLength="1" style="--token-gap:1" d="M240 280 H304"/>
+            <path class="flow-stream" style="--flow-delay:-.8s" d="M464 280 H528"/>
+            <path class="flow-token" pathLength="1" style="--token-gap:1; --flow-delay:-.8s" d="M464 280 H528"/>
+            <path class="flow-stream" style="--flow-delay:-1.6s" d="M688 280 H752"/>
+            <path class="flow-token" pathLength="1" style="--token-gap:1; --flow-delay:-1.6s" d="M688 280 H752"/>
+            <path class="flow-stream" style="--flow-delay:-2.4s" d="M912 280 H976"/>
+            <path class="flow-token" pathLength="1" style="--token-gap:1; --flow-delay:-2.4s" d="M912 280 H976"/>
+          </g>
+
+          <line x1="40" y1="624" x2="1240" y2="624" stroke="rgba(45,49,66,.12)" stroke-width=".8"/>
+          <text x="40" y="652" fill="#4f5d75" font-family="'Geist Mono',monospace" font-size="8" letter-spacing=".14em">LEGEND</text>
+          <circle cx="160" cy="648" r="6" fill="#2d3142"/><text x="180" y="652" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">开始</text>
+          <rect x="252" y="640" width="20" height="16" rx="4" fill="#fff" stroke="#2d3142"/><text x="284" y="652" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">持久化状态</text>
+          <line x1="420" y1="648" x2="476" y2="648" stroke="#7a8399" stroke-dasharray="5 4" marker-end="url(#opspilot-state-arrow)"/><text x="492" y="652" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">仍有未完成步骤</text>
+          <rect x="676" y="640" width="20" height="16" rx="4" fill="rgba(235,108,54,.08)" stroke="#eb6c36"/><text x="708" y="652" fill="#4f5d75" font-family="'Geist','Noto Sans SC','PingFang SC',sans-serif" font-size="12">闭环完成</text>
+        </svg>
+      </div>
+
+      <p class="caption"><span><strong>阻断规则：</strong>非法阶段、缺少共识或双门禁失败均不会推进状态</span><span>5 个状态 · 4 个主迁移 · 1 个执行自循环</span></p>
+    </section>
+
+    <section class="section" id="interfaces">
+      <div class="section-heading">
+        <div>
+          <span class="section-index">04 / INTERFACES</span>
+          <h2>接口与数据边界</h2>
+        </div>
+        <p class="section-copy">API 不是按页面组织，而是按运维能力域组织。所有写操作最终都变成对单一 <code>domain.State</code> 的原子进程内变更，再由具体仓储实现提交。</p>
+      </div>
+
+      <div class="matrix-wrap">
+        <table class="matrix">
+          <thead><tr><th>能力域</th><th>主要接口</th><th>内部行为与状态</th></tr></thead>
+          <tbody>
+            <tr><td>工作区读模型</td><td><code>GET /api/state</code></td><td>返回 Metrics、Sources、Assets、Relations、Changes、Signals、Alerts、Incidents、Roundtables、Experiences 与 Activity 的完整快照。</td></tr>
+            <tr><td>CMDB 与变更</td><td><code>/api/cmdb/assets</code> · <code>/topology</code> · <code>/collect</code> · <code>/changes</code></td><td>采集输入归一化、按 ExternalID 去重；外部变更按关键词和环境分类、提级风险并按 ID 幂等。</td></tr>
+            <tr><td>信号与事件</td><td><code>/api/signals/ingest</code> · <code>/pull</code> · <code>/alerts</code> · <code>/incidents</code></td><td>由服务名和信号类别生成指纹；优先抑制重复，其次归并在途事件，仅新的 critical 影响创建事件和告警。</td></tr>
+            <tr><td>异步 RCA</td><td><code>POST /api/incidents/{id}/analyze</code></td><td>进程内 goroutine 启动 analysisTask；两阶段读取变更、拓扑和历史经验，经 Harness 上限约束后更新根因与证据。</td></tr>
+            <tr><td>知识经验</td><td><code>/api/experiences/search</code> · <code>/recall</code></td><td>基于标签、中文/英文关键词与置信度打分；Search 只读，Recall 会增加 reused 并写入 Activity。</td></tr>
+            <tr><td>变更圆桌</td><td><code>/advance</code> · <code>/work-order</code> · <code>/approve</code> · <code>/execute</code></td><td>四角色独立规则形成全票门禁；工单审批后逐步执行，最后一步关闭工单并新增经验。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="deployment">
+      <div class="section-heading">
+        <div>
+          <span class="section-index">05 / DEPLOYMENT & LIMITS</span>
+          <h2>部署方式与当前边界</h2>
+        </div>
+        <p class="section-copy">同一仓库包含两个可独立运行的交付单元：vinext 前端 Worker 与 Go API 容器。Docker Compose 只编排 MongoDB 和 API，前端仍需单独启动或部署。</p>
+      </div>
+
+      <div class="boundary-grid">
+        <article class="card">
+          <p class="eyebrow">Runtime topology</p>
+          <h3>当前可运行组合</h3>
+          <ul class="boundary-list">
+            <li><strong>纯前端 Demo</strong><span><code>npm run dev</code>；无 API 地址时使用浏览器内 demoState 和 localRoundtableTransition。</span></li>
+            <li><strong>API + Memory</strong><span><code>SRE_STORAGE=memory go run ./cmd/server</code>；适合快速调试，进程退出后状态丢失。</span></li>
+            <li><strong>API + MongoDB</strong><span><code>docker compose up --build</code>；Mongo 8.0 + distroless Go 容器，API 暴露 8080。</span></li>
+            <li><strong>前端 Worker</strong><span>vinext / Vite 构建到 Cloudflare Worker；Worker 处理应用路由和图片优化，当前 D1、R2 未绑定。</span></li>
+          </ul>
+        </article>
+
+        <article class="card accent-card">
+          <p class="eyebrow">Implemented boundary</p>
+          <h3>不能误判为生产能力的部分</h3>
+          <ul>
+            <li>CMDB 自动采集使用 <code>StaticSource</code>；主动监控拉取使用硬编码批次。</li>
+            <li>审批只是状态迁移 API，没有身份认证、外部审批系统或角色授权。</li>
+            <li><code>DualControl.Execute</code> 返回模拟的 healthy 证据，没有执行真实命令。</li>
+            <li>异步 RCA 是进程内 goroutine，不具备队列持久化、重试或跨重启恢复。</li>
+            <li>CORS 当前允许任意来源；尚无租户、审计主体、密钥托管和提示注入防护。</li>
+            <li>Mongo 采用单文档 read-modify-replace；互斥锁只覆盖单进程，多 API 副本会有并发覆盖风险。</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="insight-grid">
+        <article class="card">
+          <p class="eyebrow">Verification architecture</p>
+          <h3>测试按边界分层</h3>
+          <p>Go 单元测试覆盖 Loop 上限、CMDB、监控决策、RCA、知识召回和圆桌门禁；API 测试覆盖端点闭环；Mongo integration tag 验证跨连接持久化。前端由 Vitest、构建后 HTML 检查和 Playwright 桌面/移动 E2E 覆盖。</p>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Source map</p>
+          <h3>关键代码入口</h3>
+          <p><code>app/hooks/useSreState.ts</code> · <code>cmd/server/main.go</code> · <code>internal/httpapi/server.go</code> · <code>internal/agent/loop.go</code> · <code>internal/roundtable/</code> · <code>internal/repository/</code> · <code>worker/index.ts</code></p>
+        </article>
+      </div>
+    </section>
+
+    <footer>
+      <span>OpsPilot current-state architecture · evidence: source, config, tests</span>
+      <span>Static frame complete · motion-safe · self-contained HTML</span>
+    </footer>
+  </main>
+</body>
+</html>

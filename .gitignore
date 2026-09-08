@@ -2,3 +2,8 @@
 .mcp.json
 __pycache__/
 *.py[cod]
+
+# Remotion video renderer (optional export layer; not needed to author diagrams)
+remotion/node_modules/
+remotion/out/
+remotion/.remotion/

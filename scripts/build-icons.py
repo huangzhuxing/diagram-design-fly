@@ -1,11 +1,11 @@
-"""Fetch and normalize the icon set for the diagram-design skill.
+"""Fetch and normalize the icon set for the diagram-design-fly skill.
 
 Pulls SVGs from Tabler Icons (MIT), Simple Icons (CC0), log-z/logos (MIT),
 and Devicon (MIT), normalizes them to a 24x24 viewBox using `currentColor`
 so they inherit ink from context, and emits two artifacts:
 
-  - skills/diagram-design/references/primitive-icons.md  (catalog with snippets)
-  - skills/diagram-design/assets/icons.html               (visual gallery)
+  - skills/diagram-design-fly/references/primitive-icons.md  (catalog with snippets)
+  - skills/diagram-design-fly/assets/icons.html               (visual gallery)
 
 Run:    python scripts/build-icons.py
 Reqs:   stdlib only (urllib, re, pathlib)
@@ -24,8 +24,8 @@ import urllib.error
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 
-MD_OUT = REPO / "skills" / "diagram-design" / "references" / "primitive-icons.md"
-HTML_OUT = REPO / "skills" / "diagram-design" / "assets" / "icons.html"
+MD_OUT = REPO / "skills" / "diagram-design-fly" / "references" / "primitive-icons.md"
+HTML_OUT = REPO / "skills" / "diagram-design-fly" / "assets" / "icons.html"
 VENDOR_DIR = REPO / "scripts" / "vendor" / "icons"
 
 
@@ -177,7 +177,7 @@ ICONS: dict[str, list[tuple[str, str, str, str]]] = {
 def fetch(url: str) -> str | None:
     try:
         req = urllib.request.Request(
-            url, headers={"User-Agent": "diagram-design-build/1.0 (https://github.com)"}
+            url, headers={"User-Agent": "diagram-design-fly-build/1.0 (https://github.com)"}
         )
         with urllib.request.urlopen(req, timeout=15) as r:
             return r.read().decode("utf-8")

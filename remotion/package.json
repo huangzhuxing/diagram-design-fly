@@ -1,0 +1,23 @@
+{
+  "name": "diagram-design-fly-remotion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Video/GIF renderer for diagram-design-fly flow-mode diagrams.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.522",
+    "@remotion/gif": "4.0.522",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.522"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}

@@ -19,8 +19,8 @@ from urllib.parse import parse_qs, urlparse
 
 
 ROOT = Path(__file__).resolve().parent.parent
-STYLE_GUIDE = ROOT / "skills/diagram-design/references/style-guide.md"
-ASSET_DIR = ROOT / "skills/diagram-design/assets"
+STYLE_GUIDE = ROOT / "skills/diagram-design-fly/references/style-guide.md"
+ASSET_DIR = ROOT / "skills/diagram-design-fly/assets"
 BASELINE = ROOT / "scripts/lint-skin-baseline.txt"
 MOTION_TEMPLATE = ASSET_DIR / "template-motion.html"
 
@@ -714,7 +714,7 @@ def parse_args():
     parser.add_argument(
         "--all",
         action="store_true",
-        help="lint every skills/diagram-design/assets/example-*.html and template*.html file",
+        help="lint every skills/diagram-design-fly/assets/example-*.html and template*.html file",
     )
     parser.add_argument(
         "--baseline",

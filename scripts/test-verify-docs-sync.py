@@ -106,7 +106,7 @@ def main() -> int:
         )
 
     line_dark = (
-        ROOT / "skills/diagram-design/assets/example-line-dark.html"
+        ROOT / "skills/diagram-design-fly/assets/example-line-dark.html"
     ).read_text(encoding="utf-8")
     errors = []
     verify.check_line_dark_skin(errors, line_dark)
@@ -242,11 +242,11 @@ From a repository checkout, run `python3 <repo-root>/scripts/verify-geometry.py 
             raise AssertionError(f"omitted runtime helper was not reported: {errors}")
 
         root = Path(temp_dir) / "repo"
-        profile_reference = root / "skills/diagram-design/references/profiles.md"
-        doctor_reference = root / "skills/diagram-design/references/doctor.md"
-        export_reference = root / "skills/diagram-design/references/export.md"
-        drawio_reference = root / "skills/diagram-design/references/import-drawio.md"
-        mermaid_reference = root / "skills/diagram-design/references/import-mermaid.md"
+        profile_reference = root / "skills/diagram-design-fly/references/profiles.md"
+        doctor_reference = root / "skills/diagram-design-fly/references/doctor.md"
+        export_reference = root / "skills/diagram-design-fly/references/export.md"
+        drawio_reference = root / "skills/diagram-design-fly/references/import-drawio.md"
+        mermaid_reference = root / "skills/diagram-design-fly/references/import-mermaid.md"
         export_command = root / "commands/export-diagram.md"
         drawio_command = root / "commands/import-drawio.md"
         mermaid_command = root / "commands/import-mermaid.md"
@@ -315,25 +315,25 @@ From a repository checkout, run `python3 <repo-root>/scripts/verify-geometry.py 
         factory_manifest.write_text(
             json.dumps(
                 {
-                    "name": "diagram-design",
-                    "repository": "https://github.com/example/diagram-design",
+                    "name": "diagram-design-fly",
+                    "repository": "https://github.com/example/diagram-design-fly",
                 }
             ),
             encoding="utf-8",
         )
         factory_marketplace.write_text(
-            json.dumps({"name": "diagram-design"}),
+            json.dumps({"name": "diagram-design-fly"}),
             encoding="utf-8",
         )
         valid_readme = """# Diagram Design
 
 ```bash
-droid plugin marketplace add https://github.com/example/diagram-design
-droid plugin install diagram-design@diagram-design --scope user
+droid plugin marketplace add https://github.com/example/diagram-design-fly
+droid plugin install diagram-design-fly@diagram-design-fly --scope user
 ```
 
 ```
-diagram-design/
+diagram-design-fly/
 ├── .factory-plugin/ — Factory Droid metadata
 ├── commands/
 └── skills/
@@ -349,10 +349,10 @@ diagram-design/
 
         readme.write_text(
             valid_readme.replace(
-                "droid plugin marketplace add https://github.com/example/diagram-design\n"
-                "droid plugin install diagram-design@diagram-design --scope user",
-                "droid plugin install diagram-design@diagram-design --scope user\n"
-                "droid plugin marketplace add https://github.com/example/diagram-design",
+                "droid plugin marketplace add https://github.com/example/diagram-design-fly\n"
+                "droid plugin install diagram-design-fly@diagram-design-fly --scope user",
+                "droid plugin install diagram-design-fly@diagram-design-fly --scope user\n"
+                "droid plugin marketplace add https://github.com/example/diagram-design-fly",
             ),
             encoding="utf-8",
         )
@@ -360,8 +360,8 @@ diagram-design/
         verify.check_factory_install_surface(errors, root)
         expected = (
             "README Factory install block must match native metadata: "
-            "`droid plugin marketplace add https://github.com/example/diagram-design` "
-            "then `droid plugin install diagram-design@diagram-design`"
+            "`droid plugin marketplace add https://github.com/example/diagram-design-fly` "
+            "then `droid plugin install diagram-design-fly@diagram-design-fly`"
         )
         if errors != [expected]:
             raise AssertionError(
@@ -370,7 +370,7 @@ diagram-design/
 
         readme.write_text(
             valid_readme.replace(
-                "diagram-design@diagram-design", "diagram-design@wrong-marketplace"
+                "diagram-design-fly@diagram-design-fly", "diagram-design-fly@wrong-marketplace"
             ),
             encoding="utf-8",
         )
@@ -378,8 +378,8 @@ diagram-design/
         verify.check_factory_install_surface(errors, root)
         expected = (
             "README Factory install block must match native metadata: "
-            "`droid plugin marketplace add https://github.com/example/diagram-design` "
-            "then `droid plugin install diagram-design@diagram-design`"
+            "`droid plugin marketplace add https://github.com/example/diagram-design-fly` "
+            "then `droid plugin install diagram-design-fly@diagram-design-fly`"
         )
         if errors != [expected]:
             raise AssertionError(

@@ -3,7 +3,7 @@ description: Run one-shot environment diagnostics for Diagram Design readiness
 argument-hint: "[--strict] [--json]"
 ---
 
-Run environment diagnostics for Diagram Design. Locate the available `diagram-design` skill using its `SKILL.md` path advertised by Pi. Read that `SKILL.md`, then read `references/doctor.md` relative to its directory. Treat that reference as the source of truth. Do not assume the package lives under the current working directory.
+Run environment diagnostics for Diagram Design. Locate the available `diagram-design-fly` skill using its `SKILL.md` path advertised by Pi. Read that `SKILL.md`, then read `references/doctor.md` relative to its directory. Treat that reference as the source of truth. Do not assume the package lives under the current working directory.
 
 Full argument string: `$ARGUMENTS`
 

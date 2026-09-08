@@ -133,7 +133,7 @@ jobs:
             .claude-plugin/plugin.json \
             .codex-plugin/plugin.json \
             .factory-plugin/plugin.json \
-            skills/diagram-design/SKILL.md | LC_ALL=C sort)
+            skills/diagram-design-fly/SKILL.md | LC_ALL=C sort)
           actual=$(git diff --name-only | LC_ALL=C sort)
           if [ "$actual" != "$expected_without_skill" ] \
             && [ "$actual" != "$expected_with_skill" ]; then
@@ -146,7 +146,7 @@ jobs:
             .claude-plugin/plugin.json \
             .codex-plugin/plugin.json \
             .factory-plugin/plugin.json \
-            skills/diagram-design/SKILL.md > version-bump.patch
+            skills/diagram-design-fly/SKILL.md > version-bump.patch
           test -s version-bump.patch
 
       - name: Upload version bump
@@ -212,7 +212,7 @@ jobs:
             .claude-plugin/plugin.json \
             .codex-plugin/plugin.json \
             .factory-plugin/plugin.json \
-            skills/diagram-design/SKILL.md | LC_ALL=C sort)
+            skills/diagram-design-fly/SKILL.md | LC_ALL=C sort)
           patch_paths=$(git apply --numstat "$patch" | cut -f3- | LC_ALL=C sort)
           if [ "$patch_paths" != "$expected_without_skill" ] \
             && [ "$patch_paths" != "$expected_with_skill" ]; then
@@ -279,7 +279,7 @@ jobs:
                       f"{path} changed beyond the exact {expected_version} version update"
                   )
 
-          skill_path = Path("skills/diagram-design/SKILL.md")
+          skill_path = Path("skills/diagram-design-fly/SKILL.md")
           base_skill = from_head(skill_path)
           lines = base_skill.splitlines(keepends=True)
           if not lines or lines[0].strip() != "---":
