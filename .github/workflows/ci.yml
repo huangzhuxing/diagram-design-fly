@@ -376,6 +376,13 @@ jobs:
         id: render
         run: python scripts/lint-render.py --all
 
+      # Same platform, same reason: this one reads pixels too. It needs Pillow,
+      # installed earlier for the thumbnail check, alongside the browser above.
+      - name: Run contrast linter
+        if: always() && matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        id: contrast
+        run: python scripts/lint-contrast.py --all --baseline
+
       - name: Verify generated icon assets
         if: always()
         id: icons
@@ -439,4 +446,5 @@ jobs:
           echo "| Skin Polarity Checker | ${{ steps.skin_polarity_tests.outcome == 'success' && '✅ Passed' || (steps.skin_polarity_tests.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Primitive Icons & Documentation | ${{ steps.icons.outcome == 'success' && '✅ Passed' || (steps.icons.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Render Linter Self-Test | ${{ steps.render_selftest.outcome == 'success' && '✅ Passed' || (steps.render_selftest.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Contrast Linter | ${{ steps.contrast.outcome == 'success' && '✅ Passed' || (steps.contrast.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Rendered Layout (paint oracle) | ${{ steps.render.outcome == 'success' && '✅ Passed' || (steps.render.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
