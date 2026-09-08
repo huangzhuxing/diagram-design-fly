@@ -34,6 +34,7 @@ jobs:
           cp -R skills/diagram-design-fly/assets/. _site/
           mv _site/index.html _site/gallery.html
           cp docs/site/index.html _site/index.html
+          cp docs/site/usage-codex.png _site/usage-codex.png
           cp docs/examples/*.html _site/examples/
           test -f _site/gallery.html
           test -f _site/example-skill-architecture-flow.html

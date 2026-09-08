@@ -47,10 +47,19 @@ node scripts/render-video.mjs skills/diagram-design-fly/assets/example-fork-delt
 
 This came out of a real repository — a Go + React SRE console — with the skill installed and nothing else set up. The whole prompt was:
 
+**The whole usage, start to finish:**
+
+1. Invoke `diagram-design-fly` in Codex or Claude Code.
+2. Type one sentence. You do not have to ask for motion — an ordered subject animates by default.
+3. The first time in a new project it asks about brand styling; answer `e` for the default.
+
 ```text
 将当前的项目架构详细描述出来
 Describe the architecture of this project in detail.
 ```
+
+![The actual Codex exchange: invoke the skill, type the sentence, answer `e`, get the page](docs/site/usage-codex.png)
+
 
 No mention of motion, no diagram type, no layout, no colours.
 

@@ -31,9 +31,17 @@ node scripts/render-video.mjs skills/diagram-design-fly/assets/example-skill-arc
 
 这来自一个真实仓库 —— 一个 Go + React 的 SRE 控制台 —— 除了装好 skill 之外没有任何额外配置。完整的提示词就是：
 
+**全部用法，就这三步：**
+
+1. 在 Codex 或 Claude Code 里调用 `diagram-design-fly`
+2. 输入这一句 —— 不必提动效，有顺序的主题默认就会动
+3. 首次进新项目它会问品牌样式，没有要求就回 `e`
+
 ```text
 将当前的项目架构详细描述出来
 ```
+
+![Codex 里的实际对话：调用 skill、输入那一句、回答 e、拿到架构页](docs/site/usage-codex.png)
 
 没提动效、没指定图型、没说版面、没给配色。
 
