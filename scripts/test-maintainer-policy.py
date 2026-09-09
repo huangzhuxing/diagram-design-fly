@@ -33,6 +33,9 @@ REQUIRED_COMMANDS = {
     "python3 scripts/test-verify-skin-polarity.py",
     "python3 scripts/lint-render.py --self-test",
     "python3 scripts/lint-render.py --all",
+    "python3 scripts/lint-contrast.py --all --baseline",
+    "python3 scripts/verify-flow.py",
+    "python3 scripts/test-verify-flow.py",
 }
 
 

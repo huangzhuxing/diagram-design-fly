@@ -133,6 +133,24 @@ jobs:
         id: shipped_motion
         run: python scripts/verify-motion.py --shipped
 
+      # The flow contract had no gate until now, which is exactly how the
+      # too-short-conduit defect shipped: every other check passed a diagram
+      # whose motion was invisible. Called bare, the verifier discovers every
+      # flow document under assets/; the example page is named because the
+      # README claims it passes.
+      - name: Verify the flow contract
+        if: always()
+        id: flow
+        shell: bash
+        run: |
+          python scripts/verify-flow.py
+          python scripts/verify-flow.py docs/examples/opspilot-current-architecture.html
+
+      - name: Verify flow verifier checks
+        if: always()
+        id: flow_tests
+        run: python scripts/test-verify-flow.py
+
       - name: Verify URL SVG normalization
         if: always()
         id: url_icons
@@ -405,6 +423,8 @@ jobs:
           echo "| Animated Example Structure | ${{ steps.animated_example.outcome == 'success' && '✅ Passed' || (steps.animated_example.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Animated Example Skin | ${{ steps.animated_lint.outcome == 'success' && '✅ Passed' || (steps.animated_lint.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Shipped Motion HTML | ${{ steps.shipped_motion.outcome == 'success' && '✅ Passed' || (steps.shipped_motion.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Flow Contract | ${{ steps.flow.outcome == 'success' && '✅ Passed' || (steps.flow.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Flow Verifier Tests | ${{ steps.flow_tests.outcome == 'success' && '✅ Passed' || (steps.flow_tests.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
           echo "| URL SVG Normalization | ${{ steps.url_icons.outcome == 'success' && '✅ Passed' || (steps.url_icons.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Devicon Normalization | ${{ steps.devicon.outcome == 'success' && '✅ Passed' || (steps.devicon.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Mojibake Repair Utility | ${{ steps.mojibake.outcome == 'success' && '✅ Passed' || (steps.mojibake.outcome == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY

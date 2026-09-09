@@ -21,11 +21,5 @@
     "import",
     "animation",
     "semantic-patterns"
-  ],
-  "contributors": [
-    {
-      "name": "huangzhuxing (fork: flow mode + video export)",
-      "url": "https://github.com/huangzhuxing"
-    }
   ]
 }

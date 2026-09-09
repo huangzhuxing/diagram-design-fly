@@ -25,15 +25,6 @@
       "thumb_sha256": "358e41c9e464154dbad4a138c99423ebb6bc14d47de42ab541a1c52fea70b627"
     },
     {
-      "thumb": "data-flow.webp",
-      "source": "docs/screenshots/data-flow.png",
-      "source_sha256": "25d71f2662e4383f8b2167ed807a4232fcfc24b8188168152a3ea879c2751954",
-      "width": 600,
-      "height": 294,
-      "quality": 82,
-      "thumb_sha256": "d728a273bd7bb6157e7e2d5f7d7eeec1b2dc72653c7d5ebab19975b67b4c06a7"
-    },
-    {
       "thumb": "db-schema.webp",
       "source": "docs/screenshots/db-schema.png",
       "source_sha256": "939061c701f7bb70aa1b5f7ee1fe2da3a68b3b8edc4822cd9dcb7586acd7a2d6",
@@ -50,24 +41,6 @@
       "height": 360,
       "quality": 82,
       "thumb_sha256": "af8d7f58d721bb6f6010fbf2c0c46a1540e0117f27770325dfd44da16fe590f6"
-    },
-    {
-      "thumb": "deployment.webp",
-      "source": "docs/screenshots/deployment.png",
-      "source_sha256": "cb216a1a8dd18ee31493b4d19ec29051022075ae227a4c64e5de7b5ef86a4e25",
-      "width": 600,
-      "height": 240,
-      "quality": 82,
-      "thumb_sha256": "041fadbbb1d3b278d56bb7777e973a9c14ab0989887a942b4297fb0fee0a6d8e"
-    },
-    {
-      "thumb": "dp-integration.webp",
-      "source": "docs/screenshots/dp-integration.png",
-      "source_sha256": "abb41e56d502d7d77cb1dbe46bfb5b612696bdb26c38ff347c81f581c2f0ed2a",
-      "width": 600,
-      "height": 332,
-      "quality": 82,
-      "thumb_sha256": "870eefa189b0ea7e6929878a469935146769b807b2cb7d2fcbe287eaf8f62f65"
     },
     {
       "thumb": "dp-security-matrix.webp",
@@ -97,33 +70,6 @@
       "thumb_sha256": "bc9a6977a6e83bfbc9d0cfb8011bce38f484ca887d15acb750f8235311be6590"
     },
     {
-      "thumb": "flowchart.webp",
-      "source": "docs/screenshots/flowchart.png",
-      "source_sha256": "47c84d9f89a4e60ad131b05b0619e356894052d0477a8b3b024d56e5bd91b517",
-      "width": 600,
-      "height": 360,
-      "quality": 82,
-      "thumb_sha256": "7232caea4a42ea2a8368fccea295bed4ff86b941c83247cce7b7d7a70172705c"
-    },
-    {
-      "thumb": "gantt.webp",
-      "source": "docs/screenshots/gantt.png",
-      "source_sha256": "d4dbac5e12e4e93a203908085e3aba0581ba7a895e222480b22570dca1ef0ffd",
-      "width": 600,
-      "height": 300,
-      "quality": 82,
-      "thumb_sha256": "54aa3ae88f21a22827dc7f1111526ddc34c144c86bcdf40e1bbdb2548ddca03a"
-    },
-    {
-      "thumb": "high-level.webp",
-      "source": "docs/screenshots/high-level.png",
-      "source_sha256": "afe822249fbbb601657edc468d5572d2c4a6acc8cbef4ea41771d42d13e3b75e",
-      "width": 600,
-      "height": 324,
-      "quality": 82,
-      "thumb_sha256": "027ff242466734b821097272e2863438b3731a3d177a2bf7952023831d9b5e17"
-    },
-    {
       "thumb": "import-drawio.webp",
       "source": "docs/screenshots/import-drawio.png",
       "source_sha256": "90512a3efe72afc9e95644ca30bb71606ecb8bc850b7d1d2bc740d0251f6a947",
@@ -140,24 +86,6 @@
       "height": 313,
       "quality": 82,
       "thumb_sha256": "b2d9f50f7fcbe8cdfc303052023d70213e3012db647755c3f67b2568fb04dea1"
-    },
-    {
-      "thumb": "journey.webp",
-      "source": "docs/screenshots/journey.png",
-      "source_sha256": "26cc8bb0d2aec927046dc128c06b7a93b51ab131e815dda60ba684d6c177de81",
-      "width": 600,
-      "height": 260,
-      "quality": 82,
-      "thumb_sha256": "857e4bf4d5756bb5ce92cd6bafa4501bcb6ed604915c5a7fcdd8b5255f8c8bc0"
-    },
-    {
-      "thumb": "kanban.webp",
-      "source": "docs/screenshots/kanban.png",
-      "source_sha256": "509af93dd2441e1e359c6755cf9b79cba9ec31c9b4b13f06979acf1b0b24ae95",
-      "width": 600,
-      "height": 236,
-      "quality": 82,
-      "thumb_sha256": "49768cb935b9117a5a9d31d5165ad754489d1f5bab46ff46f99a3e0b4506e5c3"
     },
     {
       "thumb": "layers.webp",
@@ -187,15 +115,6 @@
       "thumb_sha256": "b49ff846242ae212e37347da96a931f5aa92e9e564646d8dae6731fa09943c1c"
     },
     {
-      "thumb": "medallion.webp",
-      "source": "docs/screenshots/medallion.png",
-      "source_sha256": "811dbce44a7bf9b7bbcdd0d3ea36389c83e23b49f81516e939f13661ac3e5ef4",
-      "width": 600,
-      "height": 316,
-      "quality": 82,
-      "thumb_sha256": "3c795c5903db551600d24571af1add4b1584a6a28ab3b041b6e9015e59a289d0"
-    },
-    {
       "thumb": "nested.webp",
       "source": "docs/screenshots/nested.png",
       "source_sha256": "7199d6871a0aab4377af0002a42c3dc9daee9e869f1131493ecf6e17a5a1cac0",
@@ -221,15 +140,6 @@
       "height": 300,
       "quality": 82,
       "thumb_sha256": "977fb95e4b1d41f756be02b1548321f8bb1a206dd7e4647e7e279374c88aef14"
-    },
-    {
-      "thumb": "process.webp",
-      "source": "docs/screenshots/process.png",
-      "source_sha256": "70b6756e5d692c273d2e394f212a2e117148cb899cf7d5ae2f6db4355d6cf022",
-      "width": 600,
-      "height": 246,
-      "quality": 82,
-      "thumb_sha256": "29ea4bdb7554d019d81611c09e11bbce2a36b9e7b71b764d7405318b1b4ab810"
     },
     {
       "thumb": "pyramid.webp",
@@ -275,51 +185,6 @@
       "height": 300,
       "quality": 82,
       "thumb_sha256": "57a234e60a3b5354b99434216556ec5dd72f666102f23d9d3d0309baf7cfcea0"
-    },
-    {
-      "thumb": "sequence.webp",
-      "source": "docs/screenshots/sequence.png",
-      "source_sha256": "224bc43edef8c8ebe9260ad38f292bdc6efaf45cb3fe57be64ca2704cc58b2c2",
-      "width": 600,
-      "height": 350,
-      "quality": 82,
-      "thumb_sha256": "8278b3a493515a977ce6e17335a6f097f3afcd9a404349ad601e6d0ff5ea287d"
-    },
-    {
-      "thumb": "state.webp",
-      "source": "docs/screenshots/state.png",
-      "source_sha256": "60cfc8e2e67bbae841dad46280de7fe30425789cbd8ec1d776c0e7ed3bdc0871",
-      "width": 600,
-      "height": 276,
-      "quality": 82,
-      "thumb_sha256": "fc30b2bc1ca7e6c66becfa021abcb5735d1661b92cae83f7094b7bbdab50cf47"
-    },
-    {
-      "thumb": "story-map.webp",
-      "source": "docs/screenshots/story-map.png",
-      "source_sha256": "2adaaf914b772a81743fd2600d0c44b96224d06dfeeac1da83f282227d6e541a",
-      "width": 600,
-      "height": 314,
-      "quality": 82,
-      "thumb_sha256": "15b47fc312d4d0b267543474e04a46083719576d1cfa5f640d0c5f3444100327"
-    },
-    {
-      "thumb": "swimlane.webp",
-      "source": "docs/screenshots/swimlane.png",
-      "source_sha256": "562c47b77f177732aa0e5fffe2ce32426c121b4e98fa28f9f482aba1d73dba38",
-      "width": 600,
-      "height": 288,
-      "quality": 82,
-      "thumb_sha256": "1347c543efd3e1b032faf28e530371d8b39244997d028b4ff952a830672afd10"
-    },
-    {
-      "thumb": "timeline.webp",
-      "source": "docs/screenshots/timeline.png",
-      "source_sha256": "c2da6df558afa9e94ad134348729533b9726836398576ad595795d1abf9e767d",
-      "width": 600,
-      "height": 252,
-      "quality": 82,
-      "thumb_sha256": "6b1382f7dcb40e92c7bd37846ca6b704ffb337b3d83b4361d289e18d8bcec22d"
     },
     {
       "thumb": "tree.webp",

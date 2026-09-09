@@ -88,6 +88,8 @@ Every validation gate below must pass before a PR is ready. They also run automa
 | Doctor diagnostics contract (env checks, script presence, routing wiring) | `python3 scripts/verify-doctor.py` |
 | Doctor diagnostics adversarial tests | `python3 scripts/test-verify-doctor.py` |
 | Every shipped motion template/example | `python3 scripts/verify-motion.py --shipped` |
+| Every shipped flow diagram: seamless dash arithmetic, conduits long enough to watch, contiguous stage numbers, and a static frame that survives capture | `python3 scripts/verify-flow.py && python3 scripts/verify-flow.py docs/examples/opspilot-current-architecture.html` |
+| Flow verifier behaves (pass + adversarial cases) | `python3 scripts/test-verify-flow.py` |
 | Docs/routing sync (description hooks, gallery, README tree, reference links, strict-bundler support paths, command/prompt surfaces) | `python3 scripts/verify-docs-sync.py && python3 scripts/test-verify-docs-sync.py` |
 | Canonical README screenshots match their example HTML sources and recorded PNG digests | `python3 scripts/verify-screenshot-freshness.py` |
 | README WebP previews match their PNGs, manifest, dimensions, and full-size links | `python3 scripts/test-build-readme-thumbs.py && python3 scripts/build-readme-thumbs.py --check` (requires `Pillow==12.1.1`) |
@@ -129,7 +131,11 @@ python3 scripts/test-plugin-package.py \
   && python3 scripts/verify-semantic-motion.py --markdown-only \
   && python3 scripts/verify-semantic-motion.py --example-only \
   && python3 scripts/verify-motion.py --shipped \
+  && python3 scripts/verify-flow.py \
+  && python3 scripts/verify-flow.py docs/examples/opspilot-current-architecture.html \
+  && python3 scripts/test-verify-flow.py \
   && python3 scripts/lint-skin.py --all --baseline \
+  && python3 scripts/lint-contrast.py --all --baseline \
   && python3 scripts/lint-render.py --self-test \
   && python3 scripts/lint-render.py --all \
   && python3 scripts/test-verify-polar.py \

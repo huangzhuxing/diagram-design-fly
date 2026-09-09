@@ -48,14 +48,26 @@ jobs:
           python-version: "3.12"
 
       # Skip when the tip of main already carries a version change (a manual
-      # bump, or this workflow's own commit triggering another run).
+      # bump, or this workflow's own commit triggering another run), and skip
+      # entirely on a fork that has no release token.
       - name: Check whether main already bumped
         id: guard
+        # Only the emptiness of the secret crosses into this job, never its
+        # value, so the rule above -- merged code never sees the PAT -- holds.
+        env:
+          HAS_BUMP_TOKEN: ${{ secrets.AUTO_BUMP_TOKEN != '' }}
         shell: bash
         run: |
           source_sha=$(git rev-parse HEAD)
           echo "source_sha=${source_sha}" >> "$GITHUB_OUTPUT"
-          if git rev-parse --verify --quiet HEAD^ >/dev/null \
+          if [ "$HAS_BUMP_TOKEN" != "true" ]; then
+            echo "should_bump=false" >> "$GITHUB_OUTPUT"
+            note='AUTO_BUMP_TOKEN is not configured, so plugin manifest versions'
+            note="${note} are not bumped automatically. Bump them by hand with"
+            note="${note} scripts/bump-plugin-version.py, or add the secret to turn"
+            note="${note} this workflow back on."
+            echo "::notice title=Release automation idle::${note}"
+          elif git rev-parse --verify --quiet HEAD^ >/dev/null \
             && ! git diff --quiet HEAD^ HEAD -- \
               .claude-plugin/plugin.json \
               .codex-plugin/plugin.json \
