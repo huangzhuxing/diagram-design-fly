@@ -7,3 +7,4 @@ __pycache__/
 remotion/node_modules/
 remotion/out/
 remotion/.remotion/
+remotion/.DS_Store
