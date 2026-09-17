@@ -357,7 +357,9 @@ def lint_accessible_svgs(text, expected_slug, allow_template_placeholders=False)
         if aria_hidden == "true":
             continue
 
-        if (svg.attrs.get("role") or "").casefold() != "img":
+        interactive_svg = svg.attrs.get("data-interactive-svg") == "1"
+        required_role = "group" if interactive_svg else "img"
+        if (svg.attrs.get("role") or "").casefold() != required_role:
             add(svg.line, svg.offset, 'diagram <svg> must carry role="img"')
 
         viewbox = svg.attrs.get("viewbox")  # HTMLParser lowercases all attribute names
@@ -462,8 +464,9 @@ def lint_accessible_svgs(text, expected_slug, allow_template_placeholders=False)
                 'bare id="title" and id="desc" are not allowed',
             )
 
-        expected_title_id = f"{expected_slug}-title"
-        expected_description_id = f"{expected_slug}-desc"
+        naming_slug = svg.attrs.get("data-diagram-id", expected_slug) if interactive_svg else expected_slug
+        expected_title_id = f"{naming_slug}-title"
+        expected_description_id = f"{naming_slug}-desc"
         if not placeholder_ids and (
             title_id != expected_title_id or description_id != expected_description_id
         ):
@@ -558,7 +561,18 @@ def named_families(value, allowed_fonts):
 def lint_text(
     text, colors, rgb_triplets, expected_slug, allow_template_placeholders=False
 ):
-    findings = lint_accessible_svgs(
+    interactive_findings = []
+    # Interactive documents carry a reviewed runtime plus a subject-specific model.
+    # Route their script contract explicitly; retain palette, resource and SVG checks.
+    if re.search(r'<[^>]+data-motion-mode=["\']interactive["\']', text):
+        import importlib.util
+        contract = ASSET_DIR.parent / "scripts/verify_interactive.py"
+        module_spec = importlib.util.spec_from_file_location("interactive_contract", contract)
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
+        interactive_findings = [(1, 0, "interactive", e) for e in module.verify_source(text)]
+        text = SCRIPT_BLOCK_RE.sub(lambda m: "".join("\n" if c == "\n" else " " for c in m.group()), text)
+    findings = interactive_findings + lint_accessible_svgs(
         text, expected_slug, allow_template_placeholders
     )
     allowed_fonts = ALLOWED_FONTS | style_guide_families()

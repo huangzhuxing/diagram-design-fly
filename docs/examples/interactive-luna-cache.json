@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "id": "cache-lab",
+  "lang": "zh-CN",
+  "eyebrow": "INTERACTIVE ATLAS / CACHE",
+  "title": "请求到底去了哪里？",
+  "description": "拖动 TTL 与请求时刻，选择一条读取路径，观察缓存命中、缓存过期和回源如何改变请求的去向。",
+  "hint": "改参数看结论 · 点击节点读解释 · 播放时看数据包沿当前路径移动",
+  "width": 1200,
+  "height": 720,
+  "duration": 10,
+  "exportWidth": 1440,
+  "exportHeight": 980,
+  "theme": {
+    "paper": "#f5f5f5",
+    "panel": "#ffffff",
+    "ink": "#2d3142",
+    "muted": "#4f5d75",
+    "line": "#bfc0c0",
+    "accent": "#eb6c36"
+  },
+  "controls": [
+    {
+      "id": "ttl",
+      "type": "range",
+      "label": "缓存 TTL / 分钟",
+      "min": 1,
+      "max": 30,
+      "value": 10
+    },
+    {
+      "id": "requestTime",
+      "type": "range",
+      "label": "请求时刻 / 分钟",
+      "min": 0,
+      "max": 30,
+      "value": 4
+    },
+    {
+      "id": "path",
+      "type": "select",
+      "label": "读取路径",
+      "value": "normal",
+      "options": [
+        {
+          "value": "normal",
+          "label": "普通读取"
+        },
+        {
+          "value": "bypass",
+          "label": "绕过缓存"
+        },
+        {
+          "value": "stale",
+          "label": "允许 stale-while-revalidate"
+        }
+      ]
+    }
+  ]
+}

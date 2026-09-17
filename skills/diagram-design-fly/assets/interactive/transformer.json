@@ -1,0 +1,13 @@
+{
+  "version":1,"id":"transformer-lab","lang":"zh-CN","title":"走进一次注意力计算",
+  "eyebrow":"Interactive Atlas / 01 · Transformer",
+  "description":"从词向量到下一词分布：切换层与注意力头，观察同一组 Token 如何交换信息。这是未训练的微型教学模型，所有维度均为实际计算维度。",
+  "width":1440,"height":590,"duration":12,"exportWidth":1440,"exportHeight":900,"seed":7,
+  "controls":[
+    {"id":"tokens","type":"text","label":"输入 Token","value":"风 吹过 竹林","maxLength":80},
+    {"id":"layer","type":"select","label":"展开层","value":"0","options":[{"value":"0","label":"Block 01"},{"value":"1","label":"Block 02"},{"value":"2","label":"Block 03"}]},
+    {"id":"head","type":"select","label":"注意力头","value":"0","options":[{"value":"0","label":"Head 01"},{"value":"1","label":"Head 02"},{"value":"2","label":"Head 03"},{"value":"3","label":"Head 04"}]},
+    {"id":"temperature","type":"range","label":"温度","min":0.2,"max":2,"step":0.1,"value":0.8}
+  ],
+  "timeline":[{"at":0,"type":"select","id":"embedding"},{"at":3,"type":"select","id":"attention"},{"at":6,"type":"input","id":"head","value":"2"},{"at":8,"type":"input","id":"layer","value":"1"},{"at":10,"type":"input","id":"temperature","value":1.8}]
+}

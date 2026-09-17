@@ -41,6 +41,31 @@ node scripts/render-video.mjs skills/diagram-design-fly/assets/example-fork-delt
 ```
 </details>
 
+
+## Interactive explanations (local implementation)
+
+Beyond fixed flow, the skill now routes parameter experiments, selectable layers and computed diagrams to an independent `interactive` contract. It builds one offline HTML from a scene specification and an optional pure model. Cards, vectors, attention matrices, bars, stacks, selection, inputs and a deterministic timeline are reusable across subjects.
+
+- [Transformer lab](skills/diagram-design-fly/assets/example-transformer-interactive.html): original untrained micro-model, actual 16-dimensional computation, four heads and three layers.
+- [Queue lab](skills/diagram-design-fly/assets/example-queue-interactive.html): rate/capacity controls, time-dependent accumulation and conservation.
+- [Authoring contract](skills/diagram-design-fly/references/interactive.md): schema, model API, fallbacks, verification and extension boundaries.
+
+```text
+Use diagram-design-fly to explain cache hits and expiration interactively.
+Let me change TTL and request time, select a path, and watch the request travel.
+Use the default style.
+```
+
+HTML includes a complete no-JS default figure. Reduced-motion keeps parameter exploration. MP4/WebM/GIF export uses the same timeline through the existing renderer:
+
+```bash
+node scripts/render-video.mjs skills/diagram-design-fly/assets/example-transformer-interactive.html --format mp4
+node scripts/test-interactive.mjs
+python3 scripts/test-interactive-browser.py
+```
+
+The generic primitives deliberately have specific encodings (for example, matrix cells represent proportions). Read the contract before adapting them to a new quantitative meaning. This feature does not add a camera-controlled WebGL renderer.
+
 ---
 
 ## One prompt, one page
@@ -108,7 +133,7 @@ design system, the semantic patterns, and the verification harness are all hers.
 
 **What this fork adds** is `flow` mode — continuous movement for diagrams whose subject is
 throughput — and a video export path that renders any flow diagram to MP4, WebM, or GIF.
-Everything else is upstream's, unchanged. If you do not need motion, use
+The interactive runtime, authoring contract, examples and validation are also additions by this fork. If you do not need these extensions, use
 [the original](https://github.com/cathrynlavery/diagram-design).
 
 ---

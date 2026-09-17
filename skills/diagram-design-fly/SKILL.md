@@ -1,6 +1,6 @@
 ---
 name: diagram-design-fly
-description: Create branded architecture, IT current-state, flowchart, sequence, state machine, ER/data model, timeline, swimlane, quadrant, radar/spider, polar chart (polar/radial lollipop), loop/flywheel, nested, tree, org chart, layer stack, Venn, pyramid/funnel, treemap, bar, line, Gantt and scatter charts, high-level, process, medallion, data flow, DP integration, DP security matrix, Sankey, fishbone, Wardley map, kanban, user journey, deployment, dependency graph, UML class, story map, or database schema diagrams as standalone HTML/SVG/PNG. Redraw .drawio/.drawio.png/.drawio.svg or Mermaid .mmd sources at a chosen size/detail; onboard brand tokens from a website; add semantic patterns, callouts, accessible motion, or sketchy/hand-drawn styling. Subjects that carry an order — pipelines, lifecycles, cycles, plans, work moving through stages — animate by default in flow mode with numbered stages, and render to MP4, WebM, or GIF.
+description: Create branded architecture, IT current-state, flowchart, sequence, state machine, ER/data model, timeline, swimlane, quadrant, radar/spider, polar chart (polar/radial lollipop), loop/flywheel, nested, tree, org chart, layer stack, Venn, pyramid/funnel, treemap, bar, line, Gantt and scatter charts, high-level, process, medallion, data flow, DP integration, DP security matrix, Sankey, fishbone, Wardley map, kanban, user journey, deployment, dependency graph, UML class, story map, or database schema diagrams as standalone HTML/SVG/PNG. Redraw .drawio/.drawio.png/.drawio.svg or Mermaid .mmd sources at a chosen size/detail; onboard brand tokens from a website; add semantic patterns, callouts, accessible motion, or sketchy/hand-drawn styling. Interactive parameter experiments, selectable layers and computed values use portable SVG/JS; ordered subjects default to flow. Export MP4, WebM or GIF.
 license: MIT
 metadata:
   version: "2.7"
@@ -9,6 +9,8 @@ metadata:
 # Diagram Design
 
 Create visual diagrams as self-contained HTML files with inline SVG and CSS, following an opinionated editorial design system.
+
+Interactive requests: when the reader changes inputs, explores layers, inspects calculated values, or selects a trace, load [interactive.md](references/interactive.md) before choosing a static type. Its scoped contract permits dynamic content and has its own builder, runtime, and verifier. Adapt the representation to the subject; a Transformer is one example, not the template for every topic.
 
 Thirty-nine visual types. Semantic patterns describe behavior independently; type references describe layout. Details load from `references/` only when selected.
 
@@ -79,7 +81,7 @@ When behavior, state, enforcement, or risk carries the meaning, first load [`ref
 
 The pattern owns semantic primitives and its tighter budget; the type owns layout grammar.
 
-**Motion routing — decide this before drawing, without being asked.** If the figure carries an order a reader travels — a pipeline, a lifecycle, a cycle, a plan across time, work crossing columns — **default to `flow` with stage numbers on** and load [`flow.md`](references/flow.md); its complete static frame is built in, so nothing is lost. Comparison, distribution, and static structure stay static: motion there is decoration. `flow.md` lists which of the 39 types fall where, and names the one ordered type whose own verifier forbids it. For an ordered change that *finishes* and needs a controller, that is `reveal`/`step` in [`animation.md`](references/animation.md). Neither may carry meaning the static frame lacks.
+**Motion routing — decide this before drawing, without being asked.** Interactive exploration routes to [interactive.md](references/interactive.md) first. For fixed-content figures: If the figure carries an order a reader travels — a pipeline, a lifecycle, a cycle, a plan across time, work crossing columns — **default to `flow` with stage numbers on** and load [`flow.md`](references/flow.md); its complete static frame is built in, so nothing is lost. Comparison, distribution, and static structure stay static: motion there is decoration. `flow.md` lists which of the 39 types fall where, and names the one ordered type whose own verifier forbids it. For an ordered change that *finishes* and needs a controller, that is `reveal`/`step` in [`animation.md`](references/animation.md). Neither may carry meaning the static frame lacks.
 
 ### Visual-type guide (39)
 
@@ -565,7 +567,7 @@ Two consequences: the size preset sets the `viewBox` **and** the type ramp (a sl
 
 ## 12. Output
 
-Always produce a single self-contained `.html` file:
+Always produce a single self-contained `.html` file. For `interactive`, follow [interactive.md](references/interactive.md): bundled JavaScript and dynamic values are allowed, with a complete default SVG fallback. The following restrictions apply to the existing static/flow/step modes:
 
 - Embedded CSS (no external except Google Fonts)
 - Inline SVG (no external images)

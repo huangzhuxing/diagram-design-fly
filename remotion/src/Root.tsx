@@ -1,6 +1,7 @@
 import React from 'react';
 import {Composition} from 'remotion';
 import {DiagramFlow, DiagramFlowProps} from './DiagramFlow';
+import {DiagramInteractive} from './DiagramInteractive';
 
 /**
  * Placeholder props. `scripts/render-video.mjs` overrides all of these with the
@@ -22,6 +23,7 @@ const defaultProps: DiagramFlowProps = {
 
 export const RemotionRoot: React.FC = () => {
   return (
+    <>
     <Composition
       id="DiagramFlow"
       component={DiagramFlow}
@@ -42,5 +44,11 @@ export const RemotionRoot: React.FC = () => {
       fps={defaultProps.fps}
       durationInFrames={defaultProps.durationInFrames}
     />
+    <Composition id="DiagramInteractive" component={DiagramInteractive}
+      defaultProps={{html:'<!doctype html><html><head></head><body>Load an interactive artifact with render-video.mjs.</body></html>',width:1440,height:900,fps:30,durationInFrames:300}}
+      width={1440} height={900} fps={30} durationInFrames={300}
+      calculateMetadata={({props})=>({width:props.width,height:props.height,fps:props.fps,durationInFrames:props.durationInFrames})}
+    />
+    </>
   );
 };

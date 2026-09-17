@@ -60,6 +60,10 @@ const outPath = path.resolve(
 // ------------------------------------------------------------- extract HTML
 
 const html = readFileSync(sourcePath, 'utf8');
+if (/data-motion-mode=["']interactive["']/.test(html)) {
+  execFileSync(process.execPath, [path.join(REPO, 'scripts/render-interactive.mjs'), ...argv], {stdio:'inherit'});
+  process.exit(0);
+}
 
 const styles = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map(
   (match) => match[1],

@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>请求到底去了哪里？</title><style>:root{--paper:#f5f5f5;--panel:#ffffff;--ink:#2d3142;--muted:#4f5d75;--line:#bfc0c0;--accent:#eb6c36;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Geist,"Noto Sans SC","PingFang SC",system-ui,sans-serif}.diagram-interactive{max-width:1600px;margin:auto;padding:32px}.eyebrow{font-size:11px;letter-spacing:.16em;color:var(--ink);text-transform:uppercase}h1{font-size:clamp(26px,3vw,42px);line-height:1.15;margin:12px 0}header p{font-size:14px;color:var(--muted);max-width:850px;line-height:1.7;margin:0 0 22px}.workspace{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}.toolbar{padding:16px 20px;display:flex;align-items:end;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line)}.toolbar label{display:flex;gap:8px;align-items:center;font-size:12px;flex-wrap:wrap}.toolbar input[type=text]{width:220px}.toolbar input[type=range]{width:95px}.toolbar output{min-width:32px;font-variant-numeric:tabular-nums}input,select,button{font:inherit;color:var(--ink);accent-color:var(--accent)}input[type=text],select,button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:8px 10px}button{cursor:pointer;min-height:36px}button:hover{border-color:var(--accent)}button:disabled{opacity:.4;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,[data-node]:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.playback{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-left:auto}.scrub{width:130px}.clock{font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}.stage-scroll{overflow:auto;background-image:radial-gradient(var(--line) .65px,transparent .65px);background-size:20px 20px}[data-stage] svg{width:100%;min-width:920px;display:block}.node-label{font-size:16px;font-weight:650;fill:var(--ink)}.node-subtitle,.node-line{font-size:12px;fill:var(--muted)}.cell-label{font-size:11px;fill:var(--ink)}.edge-label{font-size:11px;fill:var(--muted);paint-order:stroke;stroke:var(--panel);stroke-width:5px;stroke-linejoin:round}[data-node]{cursor:pointer}[data-node]:hover .node-surface{stroke-width:2.5}.details{display:grid;grid-template-columns:190px 1fr;gap:14px;padding:20px 24px;border-top:1px solid var(--line)}.details strong{font-size:14px}.details p{font-size:13px;line-height:1.8;margin:0;white-space:pre-line;color:var(--muted)}.metrics{padding:0 24px 18px;font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}.hint{font-size:12px;color:var(--muted);margin-top:12px}.status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.is-expanded{position:fixed;inset:0;max-width:none;overflow:auto;background:var(--paper);z-index:1000}.is-expanded [data-stage] svg{max-height:72vh}.diagram-interactive:not(.interactive-ready) [data-ui]{display:none}html[data-export] .diagram-interactive{padding:24px}html[data-export] .toolbar,html[data-export] .hint{display:none}html[data-export] [data-stage] svg{min-width:0}html[data-export] h1{font-size:30px}html[data-export] header p{margin-bottom:14px}html[data-export] .details{padding:14px 20px}html[data-export] .metrics{padding-bottom:14px}@media(max-width:650px){.diagram-interactive{padding:16px}.toolbar{padding:12px;gap:12px}.playback{margin-left:0}.details{grid-template-columns:1fr;padding:16px}.hint::after{content:' · 图表可横向滚动'}}@media print{[data-ui],.hint{display:none!important}.diagram-interactive{padding:0}.stage-scroll{overflow:visible}[data-stage] svg{min-width:0}.is-expanded{position:static}.workspace{break-inside:avoid}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+:root{--paper:#f5f5f5;--panel:#ffffff;--ink:#2d3142;--muted:#4f5d75;--line:#bfc0c0;--accent:#eb6c36}</style></head><body>
+<main class="diagram-interactive" data-motion-root data-motion-mode="interactive" data-interactive-version="1" data-export-width="1440" data-export-height="980" data-duration="10">
+<header><div class="eyebrow">INTERACTIVE ATLAS / CACHE</div><h1>请求到底去了哪里？</h1><p>拖动 TTL 与请求时刻，选择一条读取路径，观察缓存命中、缓存过期和回源如何改变请求的去向。</p></header>
+<div class="workspace"><div class="toolbar" data-ui hidden><label for="cache-lab-ttl">缓存 TTL / 分钟<input id="cache-lab-ttl" data-input="ttl" type="range" value="10" min="1" max="30" step="1"/><output data-output="ttl">10</output></label><label for="cache-lab-requestTime">请求时刻 / 分钟<input id="cache-lab-requestTime" data-input="requestTime" type="range" value="4" min="0" max="30" step="1"/><output data-output="requestTime">4</output></label><label for="cache-lab-path">读取路径<select id="cache-lab-path" data-input="path"><option value="normal" selected>普通读取</option><option value="bypass" >绕过缓存</option><option value="stale" >允许 stale-while-revalidate</option></select></label><div class="playback"><button data-action="play">▶ 播放</button><button data-action="reset">重置</button><button data-action="tour" hidden>演示预设</button><label>进度<input class="scrub" data-time type="range" min="0" max="10" step="0.01" value="0"></label><span class="clock" data-clock></span><button data-action="expand">沉浸模式</button></div></div>
+<div class="stage-scroll" tabindex="0" role="region" aria-label="可横向滚动的交互图表"><div data-stage><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" data-interactive-svg="1" data-diagram-id="cache-lab" role="group" aria-labelledby="cache-lab-title cache-lab-desc"><title id="cache-lab-title">请求到底去了哪里？</title><desc id="cache-lab-desc">拖动 TTL 与请求时刻，选择一条读取路径，观察缓存命中、缓存过期和回源如何改变请求的去向。</desc><g opacity="1"><path d="M220,340 C260,340 260,330 300,330" fill="none" stroke="#4f5d75" stroke-width="1.4"/><text x="260" y="325" class="edge-label" text-anchor="middle">查缓存</text></g><g opacity="1"><path d="M520,330 C560,330 580,330 620,330" fill="none" stroke="#4f5d75" stroke-width="1.4"/><text x="570" y="320" class="edge-label" text-anchor="middle">判断新鲜度</text></g><g opacity="1"><path d="M820,300 C860,300 920,320 960,320" fill="none" stroke="#4f5d75" stroke-width="1.4"/><text x="890" y="300" class="edge-label" text-anchor="middle">命中返回</text></g><g opacity="1"><g data-node="request" role="button" tabindex="0" aria-label="01 · 发起请求。请求在缓存条目写入 4 分钟后到达。它选择了“普通读取”，模型据此决定是否先查缓存。" aria-pressed="false"><title>请求在缓存条目写入 4 分钟后到达。它选择了“普通读取”，模型据此决定是否先查缓存。</title><rect class="node-surface" x="40" y="250" width="180" height="180" rx="10" fill="var(--panel)" stroke="#4f5d75" stroke-width="1.2"/><path d="M52 262h20" stroke="#4f5d75" stroke-width="3"/><text x="52" y="286" class="node-label" >01 · 发起请求</text><text x="52" y="305" class="node-subtitle" >时刻 +4 分钟</text><text x="52" y="320" class="node-line" >TTL 10 分钟</text><text x="52" y="342" class="node-line" >路径：普通读取</text><text x="52" y="364" class="node-line" >等待返回</text></g></g><g opacity="1"><g data-node="cache" role="button" tabindex="0" aria-label="02 · 边缘缓存。请求到达时，条目年龄 4 分钟，小于 TTL 10 分钟，所以它仍然新鲜。普通读取可以直接返回它。" aria-pressed="false"><title>请求到达时，条目年龄 4 分钟，小于 TTL 10 分钟，所以它仍然新鲜。普通读取可以直接返回它。</title><rect class="node-surface" x="300" y="220" width="220" height="220" rx="10" fill="var(--panel)" stroke="#eb6c36" stroke-width="1.2"/><path d="M312 232h20" stroke="#eb6c36" stroke-width="3"/><text x="312" y="256" class="node-label" >02 · 边缘缓存</text><text x="312" y="275" class="node-subtitle" >条目年龄 4 分钟</text><text x="312" y="290" class="node-line" >状态：新鲜</text><text x="312" y="312" class="node-line" >TTL：10 分钟</text><text x="312" y="334" class="node-line" >可以直接使用</text></g></g><g opacity="1"><g data-node="decision" role="button" tabindex="0" aria-label="03 · 路径判断。普通读取先检查缓存。新鲜条目直接结束请求，这就是缓存命中。" aria-pressed="false"><title>普通读取先检查缓存。新鲜条目直接结束请求，这就是缓存命中。</title><rect class="node-surface" x="620" y="220" width="200" height="220" rx="10" fill="var(--panel)" stroke="#2d3142" stroke-width="1.2"/><path d="M632 232h20" stroke="#2d3142" stroke-width="3"/><text x="632" y="256" class="node-label" >03 · 路径判断</text><text x="632" y="275" class="node-subtitle" >结论：缓存命中</text><text x="632" y="290" class="node-line" >年龄 &lt; TTL</text><text x="632" y="312" class="node-line" >结果：缓存命中</text></g></g><g opacity="1"><g data-node="origin" role="button" tabindex="0" aria-label="04 · 源站。回源取得最新内容，随后写回缓存，让下一次普通读取有机会命中。" aria-pressed="false"><title>回源取得最新内容，随后写回缓存，让下一次普通读取有机会命中。</title><rect class="node-surface" x="620" y="480" width="220" height="160" rx="10" fill="var(--panel)" stroke="#2e5aa8" stroke-width="1.2"/><path d="M632 492h20" stroke="#2e5aa8" stroke-width="3"/><text x="632" y="516" class="node-label" >04 · 源站</text><text x="632" y="535" class="node-subtitle" >本次不经过</text><text x="632" y="550" class="node-line" >等待下一次回源</text><text x="632" y="572" class="node-line" >必要时写回</text></g></g><g opacity="1"><g data-node="response" role="button" tabindex="0" aria-label="05 · 返回响应。响应来自缓存，避免访问源站；这就是缓存命中带来的快速路径。" aria-pressed="false"><title>响应来自缓存，避免访问源站；这就是缓存命中带来的快速路径。</title><rect class="node-surface" x="960" y="220" width="200" height="220" rx="10" fill="var(--panel)" stroke="#4f5d75" stroke-width="1.2"/><path d="M972 232h20" stroke="#4f5d75" stroke-width="3"/><text x="972" y="256" class="node-label" >05 · 返回响应</text><text x="972" y="275" class="node-subtitle" >来源：缓存</text><text x="972" y="290" class="node-line" >返回缓存内容</text><text x="972" y="312" class="node-line" >无需回源</text></g></g></svg></div></div><div class="details"><strong data-detail-title>缓存命中</strong><p data-detail>条目写入时刻固定为 t=0。现在是 t=4 分钟，TTL=10 分钟；命中：请求停在缓存，源站没有收到这次请求。</p></div><div class="metrics" data-metrics>年龄 4 &lt; TTL 10  →  缓存命中  ·  回源：否  ·  写回：否</div></div>
+<noscript>当前显示默认参数的完整静态图。启用 JavaScript 后可调整参数与播放。</noscript>
+<p class="hint">改参数看结论 · 点击节点读解释 · 播放时看数据包沿当前路径移动</p><div data-status class="status" role="status" aria-live="polite"></div></main>
+<script type="application/json" data-diagram-spec>{"version":1,"id":"cache-lab","lang":"zh-CN","eyebrow":"INTERACTIVE ATLAS / CACHE","title":"请求到底去了哪里？","description":"拖动 TTL 与请求时刻，选择一条读取路径，观察缓存命中、缓存过期和回源如何改变请求的去向。","hint":"改参数看结论 · 点击节点读解释 · 播放时看数据包沿当前路径移动","width":1200,"height":720,"duration":10,"exportWidth":1440,"exportHeight":980,"theme":{"paper":"#f5f5f5","panel":"#ffffff","ink":"#2d3142","muted":"#4f5d75","line":"#bfc0c0","accent":"#eb6c36"},"controls":[{"id":"ttl","type":"range","label":"缓存 TTL / 分钟","min":1,"max":30,"value":10},{"id":"requestTime","type":"range","label":"请求时刻 / 分钟","min":0,"max":30,"value":4},{"id":"path","type":"select","label":"读取路径","value":"normal","options":[{"value":"normal","label":"普通读取"},{"value":"bypass","label":"绕过缓存"},{"value":"stale","label":"允许 stale-while-revalidate"}]}]}</script>
+<script data-diagram-model>/*
+ * Deterministic cache model for a beginner-facing explanation.
+ * Assumptions: one cache entry was written at t=0; TTL is fixed; there is no
+ * clock skew, eviction, conditional request, network failure, or concurrency.
+ * requestTime is the age of that entry when this request arrives.
+ */
+globalThis.DiagramModel = function (input, {time}) {
+  const ttl = Number(input.ttl);
+  const age = Number(input.requestTime);
+  const mode = String(input.path);
+  const fresh = age < ttl;
+  const modeLabel = mode === 'bypass' ? '绕过缓存' : mode === 'stale' ? '允许旧值' : '普通读取';
+  const stateLabel = fresh ? '新鲜' : '已过期';
+  const outcome = mode === 'bypass'
+    ? '绕过缓存'
+    : fresh
+      ? '缓存命中'
+      : mode === 'stale'
+        ? '先用旧值，再回源'
+        : '缓存未命中，回源';
+  const goesOrigin = mode === 'bypass' || !fresh;
+  const background = mode === 'stale' && !fresh;
+  const sourceLabel = mode === 'bypass' || (!fresh && !background) ? '源站' : background ? '缓存旧值' : '缓存';
+
+  const cacheDetail = fresh
+    ? `请求到达时，条目年龄 ${age} 分钟，小于 TTL ${ttl} 分钟，所以它仍然新鲜。普通读取可以直接返回它。`
+    : `请求到达时，条目年龄 ${age} 分钟，已达到或超过 TTL ${ttl} 分钟。普通读取不能把它当作新鲜数据。`;
+  const decisionDetail = mode === 'bypass'
+    ? '这条路径明确跳过缓存检查，适合强制拿最新值的场景；它不会因为缓存是否新鲜而改变。'
+    : fresh
+      ? '普通读取先检查缓存。新鲜条目直接结束请求，这就是缓存命中。'
+      : mode === 'stale'
+        ? '允许 stale-while-revalidate：先把过期旧值给用户，再在后台向源站请求新值。'
+        : '普通读取发现条目过期，必须向源站请求最新值；这一次就是缓存未命中并回源。';
+  const originDetail = mode === 'bypass'
+    ? '请求直接到这里，源站返回最新内容；因为选择了绕过缓存，本次演示不写回缓存。'
+    : background
+      ? '这是后台回源：用户已经拿到旧值，源站返回后把新内容写回缓存。'
+      : '回源取得最新内容，随后写回缓存，让下一次普通读取有机会命中。';
+
+  const edge = (id, from, to, start, end, label, color, points) => ({id, from, to, start, end, label, color, points});
+  const internal = '#4f5d75';
+  const external = '#2e5aa8';
+  let edges;
+  if (mode === 'bypass') {
+    edges = [
+      edge('request-origin', 'request', 'origin', 0, 4, '直接请求', external, [[220, 340], [300, 340], [360, 560], [620, 560]]),
+      edge('origin-response', 'origin', 'response', 4, 8, '最新内容', external, [[840, 560], [900, 560], [900, 320], [960, 320]])
+    ];
+  } else if (background) {
+    edges = [
+      edge('request-cache', 'request', 'cache', 0, 2, '查缓存', internal, [[220, 340], [260, 340], [260, 330], [300, 330]]),
+      edge('cache-response', 'cache', 'response', 2, 5, '先返回旧值', internal, [[520, 300], [620, 300], [840, 300], [960, 300]]),
+      edge('cache-origin', 'cache', 'origin', 2, 6, '后台回源', external, [[520, 380], [580, 380], [580, 560], [620, 560]]),
+      edge('origin-cache', 'origin', 'cache', 6, 9, '写回缓存', external, [[620, 480], [560, 480], [560, 420], [520, 420]])
+    ];
+  } else {
+    edges = [
+      edge('request-cache', 'request', 'cache', 0, 2, '查缓存', internal, [[220, 340], [260, 340], [260, 330], [300, 330]]),
+      edge('cache-decision', 'cache', 'decision', 2, 4, '判断新鲜度', internal, [[520, 330], [560, 330], [580, 330], [620, 330]])
+    ];
+    if (fresh) {
+      edges.push(edge('decision-response', 'decision', 'response', 4, 8, '命中返回', internal, [[820, 300], [860, 300], [920, 320], [960, 320]]));
+    } else {
+      edges.push(
+        edge('decision-origin', 'decision', 'origin', 4, 6, '过期回源', external, [[720, 400], [720, 440], [730, 500], [730, 560]]),
+        edge('origin-response', 'origin', 'response', 6, 9, '写回并返回', external, [[840, 560], [900, 560], [900, 320], [960, 320]])
+      );
+    }
+  }
+
+  const nodes = [
+    {
+      id: 'request', label: '01 · 发起请求', x: 40, y: 250, w: 180, h: 180,
+      color: '#4f5d75', subtitle: `时刻 +${age} 分钟`,
+      lines: [`TTL ${ttl} 分钟`, `路径：${modeLabel}`, '等待返回'],
+      detail: `请求在缓存条目写入 ${age} 分钟后到达。它选择了“${modeLabel}”，模型据此决定是否先查缓存。`
+    },
+    {
+      id: 'cache', label: '02 · 边缘缓存', x: 300, y: 220, w: 220, h: 220,
+      color: '#eb6c36', subtitle: `条目年龄 ${age} 分钟`,
+      lines: [`状态：${stateLabel}`, `TTL：${ttl} 分钟`, fresh ? '可以直接使用' : '普通读取不可直接用'],
+      detail: cacheDetail
+    },
+    {
+      id: 'decision', label: '03 · 路径判断', x: 620, y: 220, w: 200, h: 220,
+      color: '#2d3142', subtitle: `结论：${outcome}`,
+      lines: [mode === 'bypass' ? '不检查缓存' : fresh ? '年龄 < TTL' : '年龄 ≥ TTL', `结果：${outcome}`],
+      detail: decisionDetail
+    },
+    {
+      id: 'origin', label: '04 · 源站', x: 620, y: 480, w: 220, h: 160,
+      color: '#2e5aa8', subtitle: goesOrigin ? 'HTTP / origin' : '本次不经过',
+      lines: [goesOrigin ? (background ? '后台取最新值' : '返回最新内容') : '等待下一次回源', background ? '完成后写回缓存' : mode === 'bypass' ? '本次不写回' : '必要时写回'],
+      detail: originDetail
+    },
+    {
+      id: 'response', label: '05 · 返回响应', x: 960, y: 220, w: 200, h: 220,
+      color: '#4f5d75', subtitle: `来源：${sourceLabel}`,
+      lines: [background ? '先返回旧值' : `返回${sourceLabel}内容`, mode === 'bypass' ? '最新但不缓存' : goesOrigin ? '最新值写回缓存' : '无需回源'],
+      detail: background
+        ? 'stale-while-revalidate 把等待回源的时间藏到后台：本次响应快，但短暂返回旧值。'
+        : mode === 'bypass'
+          ? '响应来自源站，代表最新内容；绕过缓存会牺牲缓存带来的速度与减负。'
+          : fresh
+            ? '响应来自缓存，避免访问源站；这就是缓存命中带来的快速路径。'
+            : '响应来自源站，且新内容会写回缓存，为后续请求准备新鲜条目。'
+    }
+  ];
+
+  const timelineNote = background
+    ? '过期 + stale：先从缓存返回，再并行回源并写回。'
+    : mode === 'bypass'
+      ? '绕过缓存：请求直接去源站，不读取也不写回缓存。'
+      : fresh
+        ? '命中：请求停在缓存，源站没有收到这次请求。'
+        : '过期：请求继续去源站，最新内容随后写回缓存。';
+  return {
+    nodes,
+    edges,
+    summaryTitle: outcome,
+    summary: `条目写入时刻固定为 t=0。现在是 t=${age} 分钟，TTL=${ttl} 分钟；${timelineNote}`,
+    metrics: `年龄 ${age} ${fresh ? '<' : '≥'} TTL ${ttl}  →  ${outcome}  ·  回源：${goesOrigin ? '是' : '否'}  ·  写回：${background || (!fresh && mode !== 'bypass') ? '是' : '否'}`
+  };
+};
+</script>
+<script data-diagram-runtime>/* Diagram Design Fly interactive runtime. MIT. No network or dependencies. */
+(function (global) {
+  'use strict';
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const copy = x => JSON.parse(JSON.stringify(x));
+  const number = (x, fallback = 0) => Number.isFinite(Number(x)) ? Number(x) : fallback;
+  const palette = ['#7c8f6f', '#9c6b50', '#6e6479', '#5e7a9b', '#b8915a'];
+  function defaults(spec) { return Object.fromEntries((spec.controls || []).map(c => [c.id, c.value])); }
+  function normalize(spec, input) {
+    const result = defaults(spec);
+    for (const c of spec.controls || []) {
+      const value = input[c.id] ?? result[c.id];
+      if (c.type === 'range') result[c.id] = clamp(number(value, c.value), c.min, c.max);
+      else if (c.type === 'select') result[c.id] = c.options.some(o => String(o.value) === String(value)) ? String(value) : String(c.value);
+      else result[c.id] = String(value).slice(0, c.maxLength || 120);
+    }
+    return result;
+  }
+  function initial(spec) { return {input: defaults(spec), selected: '', time: 0}; }
+  function action(spec, state, event) {
+    const next = copy(state);
+    if (event.type === 'input') next.input = normalize(spec, {...next.input, [event.id]: event.value});
+    else if (event.type === 'select') next.selected = String(event.id || '');
+    else if (event.type === 'reset') return initial(spec);
+    return next;
+  }
+  function at(spec, seconds) {
+    let state = initial(spec);
+    state.time = clamp(number(seconds), 0, spec.duration);
+    for (const event of spec.timeline || []) if (event.at <= state.time) {
+      const t = state.time;
+      state = action(spec, state, event);
+      state.time = t;
+    }
+    return state;
+  }
+  function scene(spec, state, model) {
+    const derived = model ? model(copy(state.input), {time: state.time, selected: state.selected, seed: spec.seed || 1}) : {};
+    return {...spec, ...derived, nodes: derived.nodes || spec.nodes || [], edges: derived.edges || spec.edges || []};
+  }
+  function validate(spec) {
+    const errors = [];
+    if (spec.version !== 1) errors.push('version must be 1');
+    if (!/^[a-z][a-z0-9-]*$/.test(spec.id || '')) errors.push('id needs a lowercase slug');
+    if (!spec.title || !spec.description) errors.push('title and description are required');
+    if (!(spec.width >= 320 && spec.height >= 200 && spec.duration > 0 && spec.duration <= 300)) errors.push('width >= 320, height >= 200, duration 0..300 seconds required');
+    const ids = new Set();
+    for (const c of spec.controls || []) {
+      if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(c.id || '') || ids.has(c.id)) errors.push('control IDs must be unique safe identifiers');
+      ids.add(c.id);
+      if (!c.label || !['text', 'range', 'select'].includes(c.type)) errors.push('controls need label and text/range/select type');
+      if (c.type === 'range' && !(Number.isFinite(c.min) && c.max > c.min && c.value >= c.min && c.value <= c.max)) errors.push('invalid range ' + c.id);
+      if (c.type === 'select' && !(c.options?.length && c.options.some(o => String(o.value) === String(c.value)))) errors.push('invalid select ' + c.id);
+    }
+    let previous = -1;
+    for (const e of spec.timeline || []) {
+      if (!(e.at >= previous && e.at >= 0 && e.at <= spec.duration)) errors.push('timeline must be sorted and within duration');
+      if (!['input','select','reset'].includes(e.type)) errors.push('unknown timeline action');
+      if (e.type === 'input' && !ids.has(e.id)) errors.push('unknown timeline control ' + e.id);
+      previous = e.at;
+    }
+    return errors;
+  }
+  function validateScene(s) {
+    const errors = [], ids = new Set();
+    for (const n of s.nodes) {
+      if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(n.id || '') || ids.has(n.id)) errors.push('node IDs must be unique safe identifiers');
+      ids.add(n.id);
+      if (!['card','vector','matrix','bars','stack','sparkline'].includes(n.kind || 'card')) errors.push('unknown node kind ' + n.kind);
+      if (!n.label) errors.push('node label required');
+      if (![n.x,n.y,n.w,n.h].every(Number.isFinite) || n.w <= 0 || n.h <= 0) errors.push('finite node x/y/w/h required: ' + n.id);
+      if (n.x < 0 || n.y < 0 || n.x + n.w > s.width || n.y + n.h > s.height) errors.push('node outside viewBox: ' + n.id);
+      if(['bars','sparkline','vector'].includes(n.kind) && !n.values?.length) errors.push('values required: '+n.id);
+      if(n.kind==='bars' && n.values?.some(v=>v<0)) errors.push('bars require nonnegative values: '+n.id);
+      const vals = (n.values || []).flat();
+      if (vals.some(v => v !== null && !Number.isFinite(v))) errors.push('nonfinite values: ' + n.id);
+      if (n.kind === 'matrix' && (!(n.values?.length) || !n.values.every(row => Array.isArray(row) && row.length === n.values[0].length))) errors.push('matrix must be rectangular');
+    }
+    for(let i=0;i<s.nodes.length;i++)for(let j=i+1;j<s.nodes.length;j++) {
+      const a=s.nodes[i],b=s.nodes[j];
+      if(a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y) errors.push('overlapping nodes: '+a.id+' / '+b.id);
+    }
+    const edges = new Set();
+    for (const e of s.edges) {
+      if (!e.id || edges.has(e.id)) errors.push('edge IDs must be unique');
+      edges.add(e.id);
+      if (!ids.has(e.from) || !ids.has(e.to)) errors.push('edge endpoint missing: ' + e.id);
+      if (!(e.start >= 0 && e.end > e.start && e.end <= s.duration)) errors.push('edge needs start < end within duration: ' + e.id);
+      if (e.points && (e.points.length !== 4 || !e.points.flat().every(Number.isFinite))) errors.push('edge points must be four [x,y] cubic control points');
+    }
+    return errors;
+  }
+  function points(edge, nodes) {
+    if (edge.points) return edge.points;
+    const a = nodes.find(n => n.id === edge.from), b = nodes.find(n => n.id === edge.to);
+    const x = a.x + a.w, y = a.y + a.h/2, xx = b.x, yy = b.y + b.h/2;
+    return [[x,y],[x+(xx-x)/2,y],[x+(xx-x)/2,yy],[xx,yy]];
+  }
+  function point(p, t) {
+    return [0,1].map(i => (1-t)**3*p[0][i]+3*(1-t)**2*t*p[1][i]+3*(1-t)*t*t*p[2][i]+t**3*p[3][i]);
+  }
+  const text = (x,y,value,cls='',extra='') => `<text x="${x}" y="${y}" class="${cls}" ${extra}>${esc(value)}</text>`;
+  function node(n, index, selected) {
+    const col = n.color || palette[index % palette.length];
+    const depth=n.kind==='stack'?(Math.min(8,n.count || 3)-1)*5:0;
+    const x=n.x, y=n.y, w=n.w-depth, h=n.h-depth;
+    let content = '';
+    if (n.kind === 'stack') {
+      for (let i=Math.min(8,n.count || 3)-1;i>0;i--) content += `<rect x="${x+i*5}" y="${y+i*5}" width="${w}" height="${h}" rx="10" fill="var(--panel)" stroke="${esc(col)}" opacity=".55"/>`;
+    }
+    content += `<rect class="node-surface" x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="var(--panel)" stroke="${esc(col)}" stroke-width="${selected===n.id?3:1.2}"/>`;
+    content += `<path d="M${x+12} ${y+12}h20" stroke="${esc(col)}" stroke-width="3"/>`;
+    content += text(x+12,y+36,n.label,'node-label');
+    if(n.subtitle) content += text(x+12,y+55,n.subtitle,'node-subtitle');
+    const top=y+70, inner=w-24, room=h-82;
+    if (n.kind === 'vector' && n.values?.length) {
+      const step=inner/n.values.length;
+      n.values.forEach((v,i)=>{content+=`<rect x="${x+12+i*step}" y="${top}" width="${Math.max(1,step-3)}" height="${Math.min(34,room)}" rx="2" fill="${esc(col)}" fill-opacity="${.15+.8*clamp(Math.abs(v),0,1)}"><title>${esc(n.labels?.[i] || i+1)}: ${v.toFixed(3)}</title></rect>`;});
+    } else if (n.kind === 'matrix' && n.values?.length) {
+      const rows=n.values.length, cols=n.values[0].length, size=Math.min(inner/(cols+1),room/(rows+1),42), ox=x+12+size, oy=top+size;
+      n.values.forEach((row,r)=>{
+        content+=text(ox-5,oy+r*size+size*.6,n.labels?.[r] || r+1,'cell-label','text-anchor="end"');
+        row.forEach((v,c)=>{if(r===0)content+=text(ox+c*size+size/2,oy-8,n.labels?.[c] || c+1,'cell-label','text-anchor="middle"');content+=`<rect x="${ox+c*size}" y="${oy+r*size}" width="${size-2}" height="${size-2}" rx="3" fill="${esc(col)}" fill-opacity="${v===null?.04:.10+.35*clamp(v,0,1)}"/>`+text(ox+c*size+size/2,oy+r*size+size*.6,v===null?'×':`${Math.round(v*100)}`,'cell-label','text-anchor="middle"');});
+      });
+    } else if (n.kind === 'sparkline' && n.values?.length) {
+      const min=n.min ?? Math.min(0,...n.values), max=n.max ?? Math.max(...n.values,1);
+      const ch=Math.max(20,room-30), cw=inner-34, ox=x+42, oy=top+ch;
+      const pts=n.values.map((v,i)=>[ox+cw*i/Math.max(1,n.values.length-1),oy-ch*clamp((v-min)/(max-min || 1),0,1)]);
+      content+=`<path d="M${ox} ${top}V${oy}H${ox+cw}" fill="none" stroke="var(--line)"/>`;
+      content+=text(ox-5,top+8,Number(max.toFixed(2)),'cell-label','text-anchor="end"')+text(ox-5,oy,Number(min.toFixed(2)),'cell-label','text-anchor="end"');
+      content+=`<polyline data-series="${esc(n.id)}" points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${esc(col)}" stroke-width="2.5"/>`;
+      pts.forEach((p,i)=>{content+=`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${esc(col)}"><title>${esc(n.labels?.[i] || i+1)}: ${esc(n.values[i])}</title></circle>`;});
+      content+=text(ox,oy+18,n.labels?.[0] || '0','cell-label')+text(ox+cw,oy+18,n.labels?.[n.values.length-1] || n.values.length,'cell-label','text-anchor="end"');
+    } else if (n.kind === 'bars' && n.values?.length) {
+      const step=Math.min(38,room/n.values.length), max=n.max || Math.max(...n.values,1);
+      n.values.forEach((v,i)=>{const yy=top+i*step;content+=text(x+12,yy+10,n.labels?.[i] || i+1,'cell-label')+text(x+w-12,yy+10,n.format==='percent'?`${(v*100).toFixed(1)}%`:Number(v.toFixed(2)),'cell-label','text-anchor="end"');content+=`<rect x="${x+12}" y="${yy+17}" width="${inner}" height="5" rx="2" fill="${esc(col)}" opacity=".1"/><rect x="${x+12}" y="${yy+17}" width="${inner*clamp(v/max,0,1)}" height="5" rx="2" fill="${esc(col)}"/>`;});
+    } else {
+      (n.lines || []).forEach((line,i)=>{content+=text(x+12,top+i*22,line,'node-line');});
+    }
+    if(n.badge) content+=text(x+w-12,y+16,n.badge,'cell-label','text-anchor="end"');
+    return `<g data-node="${esc(n.id)}" role="button" tabindex="0" aria-label="${esc(n.label+'。'+(n.detail || n.subtitle || ''))}" aria-pressed="${selected===n.id}"><title>${esc(n.detail || n.label)}</title>${content}</g>`;
+  }
+  function svg(s, state, staticFrame=false) {
+    const selected=state.selected, relevant=new Set([selected]);
+    s.edges.forEach(e=>{if(e.from===selected||e.to===selected){relevant.add(e.from);relevant.add(e.to);}});
+    let body='';
+    for(const e of s.edges){
+      const p=points(e,s.nodes), col=e.color || '#4f5d75', active=!selected||e.from===selected||e.to===selected;
+      const d=`M${p[0]} C${p[1]} ${p[2]} ${p[3]}`;
+      body+=`<g opacity="${active?1:.18}"><path d="${d}" fill="none" stroke="${esc(col)}" stroke-width="${active&&selected?2.5:1.4}"/>`;
+      if(e.label){const q=point(p,.5);body+=text(q[0],q[1]-10,e.label,'edge-label','text-anchor="middle"');}
+      if(!staticFrame && state.time>=e.start&&state.time<e.end){const q=point(p,(state.time-e.start)/(e.end-e.start));body+=`<circle data-packet="${esc(e.id)}" cx="${q[0]}" cy="${q[1]}" r="5" fill="${esc(col)}" stroke="var(--paper)" stroke-width="2"/>`;}
+      body+='</g>';
+    }
+    s.nodes.forEach((n,i)=>{body+=`<g opacity="${!selected||relevant.has(n.id)?1:.8}">${node(n,i,selected)}</g>`;});
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${s.width} ${s.height}" data-interactive-svg="1" data-diagram-id="${esc(s.id)}" role="group" aria-labelledby="${s.id}-title ${s.id}-desc"><title id="${s.id}-title">${esc(s.title)}</title><desc id="${s.id}-desc">${esc(s.description)}</desc>${body}</svg>`;
+  }
+  function controls(spec) {
+    return (spec.controls || []).map(c=>{
+      const id=esc(spec.id+'-'+c.id);
+      const input=c.type==='select'?`<select id="${id}" data-input="${esc(c.id)}">${c.options.map(o=>`<option value="${esc(o.value)}" ${String(o.value)===String(c.value)?'selected':''}>${esc(o.label)}</option>`).join('')}</select>`:`<input id="${id}" data-input="${esc(c.id)}" type="${c.type}" value="${esc(c.value)}" ${c.type==='range'?`min="${c.min}" max="${c.max}" step="${c.step || 1}"`:`maxlength="${c.maxLength || 120}"`}/>`;
+      return `<label for="${id}">${esc(c.label)}${input}${c.type==='range'?`<output data-output="${esc(c.id)}">${esc(c.value)}</output>`:''}</label>`;
+    }).join('');
+  }
+  function mount(root, spec, model) {
+    if(root.diagram) return root.diagram;
+    let state=initial(spec), current, playing=false, raf=0, previous=0, scripted=false;
+    const $=s=>root.querySelector(s), reduced=matchMedia('(prefers-reduced-motion: reduce)');
+    const isStatic=new URLSearchParams(location.search).get('motion')==='static';
+    const exporting=!!global.__DIAGRAM_EXPORT__;
+    function render(full=true) {
+      current=scene(spec,state,model);
+      if(full){
+        const focus=document.activeElement?.closest('[data-node]')?.dataset.node;
+        $('[data-stage]').innerHTML=svg(current,state,isStatic||reduced.matches&&!exporting);
+        if(focus) [...root.querySelectorAll('[data-node]')].find(e=>e.dataset.node===focus)?.focus({preventScroll:true});
+        const selected=current.nodes.find(n=>n.id===state.selected);
+        $('[data-detail-title]').textContent=selected?.label || current.summaryTitle || '探索这张图';
+        $('[data-detail]').textContent=selected?.detail || current.summary || spec.description;
+        $('[data-metrics]').textContent=current.metrics || '';
+      } else {
+        // The geometry is deterministic; animation does not measure DOM paths.
+        $('[data-stage]').innerHTML=svg(current,state,reduced.matches&&!exporting);
+      }
+      $('[data-time]').value=String(state.time);
+      $('[data-clock]').textContent=state.time.toFixed(1)+' / '+spec.duration+' s';
+      $('[data-action="play"]').textContent=playing?'Ⅱ 暂停':'▶ 播放';
+      root.dataset.time=state.time.toFixed(4);
+    }
+    function pause(){playing=false;cancelAnimationFrame(raf);raf=0;previous=0;}
+    function syncControls(){for(const el of root.querySelectorAll('[data-input]')) {el.value=state.input[el.dataset.input];const out=[...root.querySelectorAll('[data-output]')].find(o=>o.dataset.output===el.dataset.input);if(out)out.value=el.value;}}
+    function seek(t,{timeline=true}={}) {pause();scripted=timeline;state=timeline?at(spec,t):{...state,time:clamp(number(t),0,spec.duration)};syncControls();render();return snapshot();}
+    function snapshot(){return copy({state,scene:current,playing});}
+    function dispatch(e){if(isStatic)return snapshot();pause();scripted=false;state=action(spec,state,e);if(e.type==='input')state.time=0;syncControls();render();$('[data-status]').textContent='已更新：'+(current.metrics || current.title);return snapshot();}
+    function tick(now){if(!playing)return;const dt=previous?(now-previous)/1000:0;previous=now;const t=Math.min(spec.duration,state.time+dt);state=scripted?at(spec,t):{...state,time:t};syncControls();if(t>=spec.duration)pause();render(true);if(playing)raf=requestAnimationFrame(tick);}
+    function play(){if(isStatic||reduced.matches&&!exporting)return;if(playing){pause();render();return;}if(state.time>=spec.duration)state.time=0;playing=true;previous=0;raf=requestAnimationFrame(tick);render();}
+    function activate(target){if(isStatic)return;const el=target.closest('[data-node]');if(el){const n=current.nodes.find(n=>n.id===el.dataset.node);dispatch(n?.action || {type:'select',id:el.dataset.node});}}
+    root.addEventListener('click',e=>{
+      const act=e.target.closest('[data-action]')?.dataset.action;
+      if(act==='play')play();else if(act==='reset')dispatch({type:'reset'});else if(act==='tour'){seek(0);play();}else if(act==='expand'){root.classList.toggle('is-expanded');e.target.textContent=root.classList.contains('is-expanded')?'退出沉浸':'沉浸模式';}else activate(e.target);
+    });
+    root.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-node]')){e.preventDefault();activate(e.target);}if(e.key==='Escape')root.classList.remove('is-expanded');});
+    root.addEventListener('input',e=>{if(e.target.matches('[data-time]'))seek(e.target.value,{timeline:scripted});else if(e.target.matches('[data-input]'))dispatch({type:'input',id:e.target.dataset.input,value:e.target.value});});
+    reduced.addEventListener('change',()=>{pause();render();$('[data-action="play"]').disabled=reduced.matches;$('[data-action="tour"]').disabled=reduced.matches;});
+    const beforePrint=()=>{$('[data-stage]').innerHTML=svg(current,state,true);};
+    const afterPrint=()=>render();
+    global.addEventListener('beforeprint',beforePrint);global.addEventListener('afterprint',afterPrint);
+    const api={seek,dispatch,snapshot,play,pause:()=>{pause();render();},destroy:()=>{pause();global.removeEventListener('beforeprint',beforePrint);global.removeEventListener('afterprint',afterPrint);}};
+    root.diagram=api;
+    for(const el of root.querySelectorAll('[data-input]')){
+      el.id=spec.id+'-'+el.dataset.input;
+      const label=el.closest('label');if(label)label.htmlFor=el.id;
+    }
+    render();
+    if(!isStatic){root.classList.add('interactive-ready');$('[data-ui]').hidden=false;}
+    $('[data-action="play"]').disabled=reduced.matches;$('[data-action="tour"]').disabled=reduced.matches;
+    return api;
+  }
+  global.DiagramInteractive={esc,defaults,normalize,initial,action,at,scene,validate,validateScene,points,point,svg,controls,mount};
+  if(typeof module!=='undefined')module.exports=global.DiagramInteractive;
+})(typeof window==='undefined'?globalThis:window);
+</script>
+<script data-diagram-boot>(()=>{const root=document.querySelector('[data-interactive-version]');try{const spec=JSON.parse(document.querySelector('[data-diagram-spec]').textContent);window.diagram=DiagramInteractive.mount(root,spec,globalThis.DiagramModel);window.diagramReady=true;}catch(error){root.querySelector('[data-status]').textContent='交互初始化失败，显示静态图。';window.diagramError=String(error);console.error(error);}})();</script>
+</body></html>

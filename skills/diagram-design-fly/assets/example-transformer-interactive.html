@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>走进一次注意力计算</title><style>:root{--paper:#f5f5f5;--panel:#ffffff;--ink:#2d3142;--muted:#4f5d75;--line:#bfc0c0;--accent:#eb6c36;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Geist,"Noto Sans SC","PingFang SC",system-ui,sans-serif}.diagram-interactive{max-width:1600px;margin:auto;padding:32px}.eyebrow{font-size:11px;letter-spacing:.16em;color:var(--ink);text-transform:uppercase}h1{font-size:clamp(26px,3vw,42px);line-height:1.15;margin:12px 0}header p{font-size:14px;color:var(--muted);max-width:850px;line-height:1.7;margin:0 0 22px}.workspace{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}.toolbar{padding:16px 20px;display:flex;align-items:end;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line)}.toolbar label{display:flex;gap:8px;align-items:center;font-size:12px;flex-wrap:wrap}.toolbar input[type=text]{width:220px}.toolbar input[type=range]{width:95px}.toolbar output{min-width:32px;font-variant-numeric:tabular-nums}input,select,button{font:inherit;color:var(--ink);accent-color:var(--accent)}input[type=text],select,button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:8px 10px}button{cursor:pointer;min-height:36px}button:hover{border-color:var(--accent)}button:disabled{opacity:.4;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,[data-node]:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.playback{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-left:auto}.scrub{width:130px}.clock{font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}.stage-scroll{overflow:auto;background-image:radial-gradient(var(--line) .65px,transparent .65px);background-size:20px 20px}[data-stage] svg{width:100%;min-width:920px;display:block}.node-label{font-size:16px;font-weight:650;fill:var(--ink)}.node-subtitle,.node-line{font-size:12px;fill:var(--muted)}.cell-label{font-size:11px;fill:var(--ink)}.edge-label{font-size:11px;fill:var(--muted);paint-order:stroke;stroke:var(--panel);stroke-width:5px;stroke-linejoin:round}[data-node]{cursor:pointer}[data-node]:hover .node-surface{stroke-width:2.5}.details{display:grid;grid-template-columns:190px 1fr;gap:14px;padding:20px 24px;border-top:1px solid var(--line)}.details strong{font-size:14px}.details p{font-size:13px;line-height:1.8;margin:0;white-space:pre-line;color:var(--muted)}.metrics{padding:0 24px 18px;font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}.hint{font-size:12px;color:var(--muted);margin-top:12px}.status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.is-expanded{position:fixed;inset:0;max-width:none;overflow:auto;background:var(--paper);z-index:1000}.is-expanded [data-stage] svg{max-height:72vh}.diagram-interactive:not(.interactive-ready) [data-ui]{display:none}html[data-export] .diagram-interactive{padding:24px}html[data-export] .toolbar,html[data-export] .hint{display:none}html[data-export] [data-stage] svg{min-width:0}html[data-export] h1{font-size:30px}html[data-export] header p{margin-bottom:14px}html[data-export] .details{padding:14px 20px}html[data-export] .metrics{padding-bottom:14px}@media(max-width:650px){.diagram-interactive{padding:16px}.toolbar{padding:12px;gap:12px}.playback{margin-left:0}.details{grid-template-columns:1fr;padding:16px}.hint::after{content:' · 图表可横向滚动'}}@media print{[data-ui],.hint{display:none!important}.diagram-interactive{padding:0}.stage-scroll{overflow:visible}[data-stage] svg{min-width:0}.is-expanded{position:static}.workspace{break-inside:avoid}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+:root{}</style></head><body>
+<main class="diagram-interactive" data-motion-root data-motion-mode="interactive" data-interactive-version="1" data-export-width="1440" data-export-height="900" data-duration="12">
+<header><div class="eyebrow">Interactive Atlas / 01 · Transformer</div><h1>走进一次注意力计算</h1><p>从词向量到下一词分布：切换层与注意力头，观察同一组 Token 如何交换信息。这是未训练的微型教学模型，所有维度均为实际计算维度。</p></header>
+<div class="workspace"><div class="toolbar" data-ui hidden><label for="transformer-lab-tokens">输入 Token<input id="transformer-lab-tokens" data-input="tokens" type="text" value="风 吹过 竹林" maxlength="80"/></label><label for="transformer-lab-layer">展开层<select id="transformer-lab-layer" data-input="layer"><option value="0" selected>Block 01</option><option value="1" >Block 02</option><option value="2" >Block 03</option></select></label><label for="transformer-lab-head">注意力头<select id="transformer-lab-head" data-input="head"><option value="0" selected>Head 01</option><option value="1" >Head 02</option><option value="2" >Head 03</option><option value="3" >Head 04</option></select></label><label for="transformer-lab-temperature">温度<input id="transformer-lab-temperature" data-input="temperature" type="range" value="0.8" min="0.2" max="2" step="0.1"/><output data-output="temperature">0.8</output></label><div class="playback"><button data-action="play">▶ 播放</button><button data-action="reset">重置</button><button data-action="tour">演示预设</button><label>进度<input class="scrub" data-time type="range" min="0" max="12" step="0.01" value="0"></label><span class="clock" data-clock></span><button data-action="expand">沉浸模式</button></div></div>
+<div class="stage-scroll" tabindex="0" role="region" aria-label="可横向滚动的交互图表"><div data-stage><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 590" data-interactive-svg="1" data-diagram-id="transformer-lab" role="group" aria-labelledby="transformer-lab-title transformer-lab-desc"><title id="transformer-lab-title">走进一次注意力计算</title><desc id="transformer-lab-desc">从词向量到下一词分布：切换层与注意力头，观察同一组 Token 如何交换信息。这是未训练的微型教学模型，所有维度均为实际计算维度。</desc><g opacity="1"><path d="M194,185 C218,185 218,166 242,166" fill="none" stroke="#4f5d75" stroke-width="1.4"/></g><g opacity="1"><path d="M432,166 C457,166 457,130 482,130" fill="none" stroke="#4f5d75" stroke-width="1.4"/></g><g opacity="1"><path d="M582,210 C582,240 610,260 610,300" fill="none" stroke="#4f5d75" stroke-width="1.4"/><text x="596" y="241.25" class="edge-label" text-anchor="middle">匹配与 Mask</text></g><g opacity="1"><path d="M740,430 C765,430 765,167.5 790,167.5" fill="none" stroke="#4f5d75" stroke-width="1.4"/><text x="765" y="288.75" class="edge-label" text-anchor="middle">权重 × V</text></g><g opacity="1"><path d="M975,167.5 C1000,167.5 1000,170 1025,170" fill="none" stroke="#4f5d75" stroke-width="1.4"/></g><g opacity="1"><path d="M1210,170 C1234,170 1234,225 1258,225" fill="none" stroke="#4f5d75" stroke-width="1.4"/></g><g opacity="1"><path d="M337,90 C337,8 1117,8 1117,90" fill="none" stroke="#9c6b50" stroke-width="1.4"/><text x="727" y="18.5" class="edge-label" text-anchor="middle">残差旁路 · 保留输入</text></g><g opacity="1"><g data-node="tokens" role="button" tabindex="0" aria-label="01 · 输入序列。按空格分词，最多展示 6 个 Token。这里使用固定哈希词嵌入，未经训练。" aria-pressed="false"><title>按空格分词，最多展示 6 个 Token。这里使用固定哈希词嵌入，未经训练。</title><rect class="node-surface" x="24" y="90" width="170" height="190" rx="10" fill="var(--panel)" stroke="#7c8f6f" stroke-width="1.2"/><path d="M36 102h20" stroke="#7c8f6f" stroke-width="3"/><text x="36" y="126" class="node-label" >01 · 输入序列</text><text x="36" y="160" class="node-line" >1  风</text><text x="36" y="182" class="node-line" >2  吹过</text><text x="36" y="204" class="node-line" >3  竹林</text></g></g><g opacity="1"><g data-node="embedding" role="button" tabindex="0" aria-label="02 · 词与位置。词内容向量与正弦位置编码逐元素相加。图中每格对应一个实际维度。" aria-pressed="false"><title>词内容向量与正弦位置编码逐元素相加。图中每格对应一个实际维度。</title><rect class="node-surface" x="242" y="90" width="190" height="152" rx="10" fill="var(--panel)" stroke="#9c6b50" stroke-width="1.2"/><path d="M254 102h20" stroke="#9c6b50" stroke-width="3"/><text x="254" y="126" class="node-label" >02 · 词与位置</text><text x="254" y="145" class="node-subtitle" >16 维 · 最后位置</text><rect x="254" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.4162868384163888"><title>1: 0.333</title></rect><rect x="264.375" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.6952411910273546"><title>2: -0.682</title></rect><rect x="274.75" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.4332711678241664"><title>3: 0.354</title></rect><rect x="285.125" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.6357066899589047"><title>4: 0.607</title></rect><rect x="295.5" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.5375088638542588"><title>5: -0.484</title></rect><rect x="305.875" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.22126452458829057"><title>6: 0.089</title></rect><rect x="316.25" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.6347208417005085"><title>7: 0.606</title></rect><rect x="326.625" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.21164558768166733"><title>8: -0.077</title></rect><rect x="337" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.4783039356458406"><title>9: -0.410</title></rect><rect x="347.375" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.7456370850038031"><title>10: 0.745</title></rect><rect x="357.75" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.20082110553819038"><title>11: 0.064</title></rect><rect x="368.125" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.45787786260245456"><title>12: -0.385</title></rect><rect x="378.5" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.40302881039856275"><title>13: 0.316</title></rect><rect x="388.875" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.6144780987623"><title>14: 0.581</title></rect><rect x="399.25" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.5994770099755713"><title>15: -0.562</title></rect><rect x="409.625" y="160" width="7.375" height="34" rx="2" fill="#9c6b50" fill-opacity="0.296209434181548"><title>16: 0.183</title></rect></g></g><g opacity="1"><g data-node="qkv" role="button" tabindex="0" aria-label="03 · Q / K / V。对归一化后的输入使用三组独立投影，生成查询 Q、键 K、值 V。切换 Head 可以查看不同子空间。" aria-pressed="false"><title>对归一化后的输入使用三组独立投影，生成查询 Q、键 K、值 V。切换 Head 可以查看不同子空间。</title><rect class="node-surface" x="482" y="50" width="200" height="160" rx="10" fill="var(--panel)" stroke="#6e6479" stroke-width="1.2"/><path d="M494 62h20" stroke="#6e6479" stroke-width="3"/><text x="494" y="86" class="node-label" >03 · Q / K / V</text><text x="494" y="105" class="node-subtitle" >Head 1 的 Q · 4 维</text><rect x="494" y="120" width="41" height="34" rx="2" fill="#6e6479" fill-opacity="0.4494850501783433"><title>1: -0.374</title></rect><rect x="538" y="120" width="41" height="34" rx="2" fill="#6e6479" fill-opacity="0.49420506708382983"><title>2: 0.430</title></rect><rect x="582" y="120" width="41" height="34" rx="2" fill="#6e6479" fill-opacity="0.475798333414686"><title>3: -0.407</title></rect><rect x="626" y="120" width="41" height="34" rx="2" fill="#6e6479" fill-opacity="0.3976406195948326"><title>4: 0.310</title></rect><text x="670" y="66" class="cell-label" text-anchor="end">L1 / H1</text></g></g><g opacity="1"><g data-node="attention" role="button" tabindex="0" aria-label="04 · 因果注意力。先计算 QKᵀ / √4，再屏蔽未来位置并执行 Softmax。× 表示被屏蔽；逐格显示四舍五入后的百分比，未舍入行和为 1。" aria-pressed="false"><title>先计算 QKᵀ / √4，再屏蔽未来位置并执行 Softmax。× 表示被屏蔽；逐格显示四舍五入后的百分比，未舍入行和为 1。</title><rect class="node-surface" x="480" y="300" width="260" height="260" rx="10" fill="var(--panel)" stroke="#5e7a9b" stroke-width="1.2"/><path d="M492 312h20" stroke="#5e7a9b" stroke-width="3"/><text x="492" y="336" class="node-label" >04 · 因果注意力</text><text x="492" y="355" class="node-subtitle" >百分比 · 每行合计 100%</text><text x="529" y="437.2" class="cell-label" text-anchor="end">1</text><text x="555" y="404" class="cell-label" text-anchor="middle">1</text><rect x="534" y="412" width="40" height="40" rx="3" fill="#5e7a9b" fill-opacity="0.44999999999999996"/><text x="555" y="437.2" class="cell-label" text-anchor="middle">100</text><text x="597" y="404" class="cell-label" text-anchor="middle">2</text><rect x="576" y="412" width="40" height="40" rx="3" fill="#5e7a9b" fill-opacity="0.04"/><text x="597" y="437.2" class="cell-label" text-anchor="middle">×</text><text x="639" y="404" class="cell-label" text-anchor="middle">3</text><rect x="618" y="412" width="40" height="40" rx="3" fill="#5e7a9b" fill-opacity="0.04"/><text x="639" y="437.2" class="cell-label" text-anchor="middle">×</text><text x="529" y="479.2" class="cell-label" text-anchor="end">2</text><rect x="534" y="454" width="40" height="40" rx="3" fill="#5e7a9b" fill-opacity="0.27467668252354493"/><text x="555" y="479.2" class="cell-label" text-anchor="middle">50</text><rect x="576" y="454" width="40" height="40" rx="3" fill="#5e7a9b" fill-opacity="0.275323317476455"/><text x="597" y="479.2" class="cell-label" text-anchor="middle">50</text><rect x="618" y="454" width="40" height="40" rx="3" fill="#5e7a9b" fill-opacity="0.04"/><text x="639" y="479.2" class="cell-label" text-anchor="middle">×</text><text x="529" y="521.2" class="cell-label" text-anchor="end">3</text><rect x="534" y="496" width="40" height="40" rx="3" fill="#5e7a9b" fill-opacity="0.2173296443023477"/><text x="555" y="521.2" class="cell-label" text-anchor="middle">34</text><rect x="576" y="496" width="40" height="40" rx="3" fill="#5e7a9b" fill-opacity="0.21924060630678815"/><text x="597" y="521.2" class="cell-label" text-anchor="middle">34</text><rect x="618" y="496" width="40" height="40" rx="3" fill="#5e7a9b" fill-opacity="0.21342974939086412"/><text x="639" y="521.2" class="cell-label" text-anchor="middle">32</text></g></g><g opacity="1"><g data-node="merge" role="button" tabindex="0" aria-label="05 · 汇聚上下文。每个头按注意力权重汇聚 V；拼接四个头，再做输出投影。" aria-pressed="false"><title>每个头按注意力权重汇聚 V；拼接四个头，再做输出投影。</title><rect class="node-surface" x="790" y="90" width="185" height="155" rx="10" fill="var(--panel)" stroke="#b8915a" stroke-width="1.2"/><path d="M802 102h20" stroke="#b8915a" stroke-width="3"/><text x="802" y="126" class="node-label" >05 · 汇聚上下文</text><text x="802" y="145" class="node-subtitle" >4 × 4 → 16 维</text><rect x="802" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.37335482403914144"><title>1: -0.279</title></rect><rect x="812.0625" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.44559743079614034"><title>2: 0.369</title></rect><rect x="822.125" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.4636278626933651"><title>3: -0.392</title></rect><rect x="832.1875" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.42413936255035545"><title>4: 0.343</title></rect><rect x="842.25" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.33726526732004636"><title>5: -0.234</title></rect><rect x="852.3125" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.21390851744681366"><title>6: 0.080</title></rect><rect x="862.375" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.22116896935408625"><title>7: 0.089</title></rect><rect x="872.4375" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.34319416202366365"><title>8: -0.241</title></rect><rect x="882.5" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.43148326398332393"><title>9: 0.352</title></rect><rect x="892.5625" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.4642263634022997"><title>10: -0.393</title></rect><rect x="902.625" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.43934076654865895"><title>11: 0.362</title></rect><rect x="912.6875" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.361390458719854"><title>12: -0.264</title></rect><rect x="922.75" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.25283630794009404"><title>13: 0.129</title></rect><rect x="932.8125" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.18144839429063173"><title>14: 0.039</title></rect><rect x="942.875" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.309965502920319"><title>15: -0.200</title></rect><rect x="952.9375" y="160" width="7.0625" height="34" rx="2" fill="#b8915a" fill-opacity="0.4091451515034459"><title>16: 0.324</title></rect></g></g><g opacity="1"><g data-node="ffn" role="button" tabindex="0" aria-label="06 · 残差与前馈。注意力输出与原输入相加；再次归一化后进入前馈网络，并加上第二条残差。" aria-pressed="false"><title>注意力输出与原输入相加；再次归一化后进入前馈网络，并加上第二条残差。</title><rect class="node-surface" x="1025" y="90" width="185" height="160" rx="10" fill="var(--panel)" stroke="#7c8f6f" stroke-width="1.2"/><path d="M1037 102h20" stroke="#7c8f6f" stroke-width="3"/><text x="1037" y="126" class="node-label" >06 · 残差与前馈</text><text x="1037" y="160" class="node-line" >Pre-norm + 残差</text><text x="1037" y="182" class="node-line" >16 → 32 → 16</text><text x="1037" y="204" class="node-line" >GELU 非线性</text></g></g><g opacity="1"><g data-node="blocks" role="button" tabindex="0" aria-label="Block 1 / 3。叠层代表三个独立参数的 Transformer Block。点击轮换当前展开层，上方的计算值同步更新。" aria-pressed="false"><title>叠层代表三个独立参数的 Transformer Block。点击轮换当前展开层，上方的计算值同步更新。</title><rect x="800" y="345" width="175" height="170" rx="10" fill="var(--panel)" stroke="#9c6b50" opacity=".55"/><rect x="795" y="340" width="175" height="170" rx="10" fill="var(--panel)" stroke="#9c6b50" opacity=".55"/><rect class="node-surface" x="790" y="335" width="175" height="170" rx="10" fill="var(--panel)" stroke="#9c6b50" stroke-width="1.2"/><path d="M802 347h20" stroke="#9c6b50" stroke-width="3"/><text x="802" y="371" class="node-label" >Block 1 / 3</text><text x="802" y="405" class="node-line" >点击展开下一层</text><text x="802" y="427" class="node-line" >所有位置一起更新</text></g></g><g opacity="1"><g data-node="prediction" role="button" tabindex="0" aria-label="07 · 下一词分布。最后位置经过三层后投影到固定的四词教学词表，再除以温度并 Softmax。未训练模型的概率不能解释为真实语言预测质量。" aria-pressed="false"><title>最后位置经过三层后投影到固定的四词教学词表，再除以温度并 Softmax。未训练模型的概率不能解释为真实语言预测质量。</title><rect class="node-surface" x="1258" y="90" width="160" height="270" rx="10" fill="var(--panel)" stroke="#6e6479" stroke-width="1.2"/><path d="M1270 102h20" stroke="#6e6479" stroke-width="3"/><text x="1270" y="126" class="node-label" >07 · 下一词分布</text><text x="1270" y="145" class="node-subtitle" >温度 T = 0.8</text><text x="1270" y="170" class="cell-label" >山</text><text x="1406" y="170" class="cell-label" text-anchor="end">36.1%</text><rect x="1270" y="177" width="136" height="5" rx="2" fill="#6e6479" opacity=".1"/><rect x="1270" y="177" width="49.124756863716115" height="5" rx="2" fill="#6e6479"/><text x="1270" y="208" class="cell-label" >水</text><text x="1406" y="208" class="cell-label" text-anchor="end">13.4%</text><rect x="1270" y="215" width="136" height="5" rx="2" fill="#6e6479" opacity=".1"/><rect x="1270" y="215" width="18.16788476736296" height="5" rx="2" fill="#6e6479"/><text x="1270" y="246" class="cell-label" >云</text><text x="1406" y="246" class="cell-label" text-anchor="end">33.4%</text><rect x="1270" y="253" width="136" height="5" rx="2" fill="#6e6479" opacity=".1"/><rect x="1270" y="253" width="45.49175342801528" height="5" rx="2" fill="#6e6479"/><text x="1270" y="284" class="cell-label" >。</text><text x="1406" y="284" class="cell-label" text-anchor="end">17.1%</text><rect x="1270" y="291" width="136" height="5" rx="2" fill="#6e6479" opacity=".1"/><rect x="1270" y="291" width="23.215604940905656" height="5" rx="2" fill="#6e6479"/></g></g></svg></div></div><div class="details"><strong data-detail-title>一次有边界的教学实验</strong><p data-detail>从左向右追踪数据。点击矩阵查看解释，切换注意力头比较分配，点击叠层展开下一层。播放数据流只演示计算顺序；数值由当前输入完整计算。</p></div><div class="metrics" data-metrics>3 个 Token · 16 维 · 4 个头 · 3 层 · 实际前馈维度 32 · 未训练 / 固定词表</div></div>
+<noscript>当前显示默认参数的完整静态图。启用 JavaScript 后可调整参数与播放。</noscript>
+<p class="hint">点击节点查看细节 · 调整参数观察变化 · 播放一次后停止</p><div data-status class="status" role="status" aria-live="polite"></div></main>
+<script type="application/json" data-diagram-spec>{"version":1,"id":"transformer-lab","lang":"zh-CN","title":"走进一次注意力计算","eyebrow":"Interactive Atlas / 01 · Transformer","description":"从词向量到下一词分布：切换层与注意力头，观察同一组 Token 如何交换信息。这是未训练的微型教学模型，所有维度均为实际计算维度。","width":1440,"height":590,"duration":12,"exportWidth":1440,"exportHeight":900,"seed":7,"controls":[{"id":"tokens","type":"text","label":"输入 Token","value":"风 吹过 竹林","maxLength":80},{"id":"layer","type":"select","label":"展开层","value":"0","options":[{"value":"0","label":"Block 01"},{"value":"1","label":"Block 02"},{"value":"2","label":"Block 03"}]},{"id":"head","type":"select","label":"注意力头","value":"0","options":[{"value":"0","label":"Head 01"},{"value":"1","label":"Head 02"},{"value":"2","label":"Head 03"},{"value":"3","label":"Head 04"}]},{"id":"temperature","type":"range","label":"温度","min":0.2,"max":2,"step":0.1,"value":0.8}],"timeline":[{"at":0,"type":"select","id":"embedding"},{"at":3,"type":"select","id":"attention"},{"at":6,"type":"input","id":"head","value":"2"},{"at":8,"type":"input","id":"layer","value":"1"},{"at":10,"type":"input","id":"temperature","value":1.8}]}</script>
+<script data-diagram-model>/* Original educational model: D=16, 4 heads of 4 dimensions, 3 pre-norm blocks.
+   Deterministic untrained weights and a fixed 4-token vocabulary; not an LLM. */
+(function(g){
+  const D=16,H=4,F=32;
+  const dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0);
+  const add=(a,b)=>a.map((v,i)=>v+b[i]);
+  const weights=(a,b,seed)=>Array.from({length:a},(_,i)=>Array.from({length:b},(_,j)=>Math.sin((i+1)*1.37+(j+1)*2.71+seed*3.17)*.22));
+  const mul=(v,w)=>w[0].map((_,j)=>v.reduce((s,x,i)=>s+x*w[i][j],0));
+  const soft=v=>{const m=Math.max(...v),a=v.map(x=>Math.exp(x-m)),s=a.reduce((x,y)=>x+y,0);return a.map(x=>x/s);};
+  const norm=v=>{const m=v.reduce((a,b)=>a+b,0)/v.length,s=v.reduce((a,b)=>a+(b-m)**2,0)/v.length;return v.map(x=>(x-m)/Math.sqrt(s+1e-5));};
+  function run(tokens){
+    const embeddings=tokens.map((t,p)=>{const hash=Array.from(t).reduce((s,c)=>s*31+c.codePointAt(0),7)%65521;return Array.from({length:D},(_,j)=>Math.sin(hash+j*1.9)*.6+(j%2?Math.cos:Math.sin)(p/10000**(2*Math.floor(j/2)/D))*.2);});
+    let X=embeddings;const layers=[];
+    for(let l=0;l<3;l++){
+      const N=X.map(norm),Q=N.map(v=>mul(v,weights(D,D,1+l*6))),K=N.map(v=>mul(v,weights(D,D,2+l*6))),V=N.map(v=>mul(v,weights(D,D,3+l*6)));
+      const attention=Array.from({length:H},(_,h)=>Q.map((q,i)=>{const row=soft(K.slice(0,i+1).map(k=>dot(q.slice(h*4,h*4+4),k.slice(h*4,h*4+4))/2));return [...row,...Array(tokens.length-row.length).fill(0)];}));
+      const merged=X.map((_,i)=>Array.from({length:H},(_,h)=>Array.from({length:4},(_,d)=>attention[h][i].reduce((s,a,j)=>s+a*V[j][h*4+d],0))).flat());
+      const residual=X.map((v,i)=>add(v,mul(merged[i],weights(D,D,4+l*6))));
+      const output=residual.map(v=>add(v,mul(mul(norm(v),weights(D,F,5+l*6)).map(x=>.5*x*(1+Math.tanh(Math.sqrt(2/Math.PI)*(x+.044715*x**3)))),weights(F,D,6+l*6))));
+      layers.push({input:X,Q,K,V,attention,merged,output});X=output;
+    }
+    return {embeddings,layers,logits:mul(norm(X[X.length-1]),weights(D,4,99))};
+  }
+  g.TransformerMath={run,soft};
+  g.DiagramModel=function(input){
+    const tokens=String(input.tokens).trim().split(/\s+/).filter(Boolean).slice(0,6);if(!tokens.length)tokens.push('风');
+    const data=run(tokens),l=Number(input.layer),h=Number(input.head),b=data.layers[l],last=tokens.length-1,probs=soft(data.logits.map(x=>x/Number(input.temperature)));
+    const card=(id,label,x,y,w,hh,extra={})=>({id,label,x,y,w,h:hh,...extra});
+    const nodes=[
+      card('tokens','01 · 输入序列',24,90,170,190,{lines:tokens.map((t,i)=>`${i+1}  ${t}`),detail:'按空格分词，最多展示 6 个 Token。这里使用固定哈希词嵌入，未经训练。'}),
+      card('embedding','02 · 词与位置',242,90,190,152,{kind:'vector',subtitle:'16 维 · 最后位置',values:data.embeddings[last],detail:'词内容向量与正弦位置编码逐元素相加。图中每格对应一个实际维度。'}),
+      card('qkv','03 · Q / K / V',482,50,200,160,{kind:'vector',subtitle:`Head ${h+1} 的 Q · 4 维`,values:b.Q[last].slice(h*4,h*4+4),detail:'对归一化后的输入使用三组独立投影，生成查询 Q、键 K、值 V。切换 Head 可以查看不同子空间。',badge:`L${l+1} / H${h+1}`}),
+      card('attention','04 · 因果注意力',480,300,260,260,{kind:'matrix',subtitle:'百分比 · 每行合计 100%',values:b.attention[h].map((row,i)=>row.map((v,j)=>j>i?null:v)),labels:tokens.map((_,i)=>i+1),detail:'先计算 QKᵀ / √4，再屏蔽未来位置并执行 Softmax。× 表示被屏蔽；逐格显示四舍五入后的百分比，未舍入行和为 1。'}),
+      card('merge','05 · 汇聚上下文',790,90,185,155,{kind:'vector',subtitle:'4 × 4 → 16 维',values:b.merged[last],detail:'每个头按注意力权重汇聚 V；拼接四个头，再做输出投影。'}),
+      card('ffn','06 · 残差与前馈',1025,90,185,160,{lines:['Pre-norm + 残差','16 → 32 → 16','GELU 非线性'],detail:'注意力输出与原输入相加；再次归一化后进入前馈网络，并加上第二条残差。'}),
+      card('blocks',`Block ${l+1} / 3`,790,335,185,180,{kind:'stack',count:3,lines:['点击展开下一层','所有位置一起更新'],action:{type:'input',id:'layer',value:String((l+1)%3)},detail:'叠层代表三个独立参数的 Transformer Block。点击轮换当前展开层，上方的计算值同步更新。'}),
+      card('prediction','07 · 下一词分布',1258,90,160,270,{kind:'bars',subtitle:`温度 T = ${input.temperature}`,values:probs,labels:['山','水','云','。'],format:'percent',max:1,detail:'最后位置经过三层后投影到固定的四词教学词表，再除以温度并 Softmax。未训练模型的概率不能解释为真实语言预测质量。'})
+    ];
+    const edges=[
+      {id:'e1',from:'tokens',to:'embedding',start:0,end:2},
+      {id:'e2',from:'embedding',to:'qkv',start:2,end:4},
+      {id:'e3',from:'qkv',to:'attention',start:4,end:6,points:[[582,210],[582,240],[610,260],[610,300]],label:'匹配与 Mask'},
+      {id:'e4',from:'attention',to:'merge',start:6,end:8,label:'权重 × V'},
+      {id:'e5',from:'merge',to:'ffn',start:8,end:10},
+      {id:'e6',from:'ffn',to:'prediction',start:10,end:12},
+      {id:'residual',from:'embedding',to:'ffn',start:2,end:10,color:'#9c6b50',points:[[337,90],[337,8],[1117,8],[1117,90]],label:'残差旁路 · 保留输入'}
+    ];
+    return {nodes,edges,summaryTitle:'一次有边界的教学实验',summary:'从左向右追踪数据。点击矩阵查看解释，切换注意力头比较分配，点击叠层展开下一层。播放数据流只演示计算顺序；数值由当前输入完整计算。',metrics:`${tokens.length} 个 Token · 16 维 · 4 个头 · 3 层 · 实际前馈维度 32 · 未训练 / 固定词表`};
+  };
+})(globalThis);
+</script>
+<script data-diagram-runtime>/* Diagram Design Fly interactive runtime. MIT. No network or dependencies. */
+(function (global) {
+  'use strict';
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const copy = x => JSON.parse(JSON.stringify(x));
+  const number = (x, fallback = 0) => Number.isFinite(Number(x)) ? Number(x) : fallback;
+  const palette = ['#7c8f6f', '#9c6b50', '#6e6479', '#5e7a9b', '#b8915a'];
+  function defaults(spec) { return Object.fromEntries((spec.controls || []).map(c => [c.id, c.value])); }
+  function normalize(spec, input) {
+    const result = defaults(spec);
+    for (const c of spec.controls || []) {
+      const value = input[c.id] ?? result[c.id];
+      if (c.type === 'range') result[c.id] = clamp(number(value, c.value), c.min, c.max);
+      else if (c.type === 'select') result[c.id] = c.options.some(o => String(o.value) === String(value)) ? String(value) : String(c.value);
+      else result[c.id] = String(value).slice(0, c.maxLength || 120);
+    }
+    return result;
+  }
+  function initial(spec) { return {input: defaults(spec), selected: '', time: 0}; }
+  function action(spec, state, event) {
+    const next = copy(state);
+    if (event.type === 'input') next.input = normalize(spec, {...next.input, [event.id]: event.value});
+    else if (event.type === 'select') next.selected = String(event.id || '');
+    else if (event.type === 'reset') return initial(spec);
+    return next;
+  }
+  function at(spec, seconds) {
+    let state = initial(spec);
+    state.time = clamp(number(seconds), 0, spec.duration);
+    for (const event of spec.timeline || []) if (event.at <= state.time) {
+      const t = state.time;
+      state = action(spec, state, event);
+      state.time = t;
+    }
+    return state;
+  }
+  function scene(spec, state, model) {
+    const derived = model ? model(copy(state.input), {time: state.time, selected: state.selected, seed: spec.seed || 1}) : {};
+    return {...spec, ...derived, nodes: derived.nodes || spec.nodes || [], edges: derived.edges || spec.edges || []};
+  }
+  function validate(spec) {
+    const errors = [];
+    if (spec.version !== 1) errors.push('version must be 1');
+    if (!/^[a-z][a-z0-9-]*$/.test(spec.id || '')) errors.push('id needs a lowercase slug');
+    if (!spec.title || !spec.description) errors.push('title and description are required');
+    if (!(spec.width >= 320 && spec.height >= 200 && spec.duration > 0 && spec.duration <= 300)) errors.push('width >= 320, height >= 200, duration 0..300 seconds required');
+    const ids = new Set();
+    for (const c of spec.controls || []) {
+      if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(c.id || '') || ids.has(c.id)) errors.push('control IDs must be unique safe identifiers');
+      ids.add(c.id);
+      if (!c.label || !['text', 'range', 'select'].includes(c.type)) errors.push('controls need label and text/range/select type');
+      if (c.type === 'range' && !(Number.isFinite(c.min) && c.max > c.min && c.value >= c.min && c.value <= c.max)) errors.push('invalid range ' + c.id);
+      if (c.type === 'select' && !(c.options?.length && c.options.some(o => String(o.value) === String(c.value)))) errors.push('invalid select ' + c.id);
+    }
+    let previous = -1;
+    for (const e of spec.timeline || []) {
+      if (!(e.at >= previous && e.at >= 0 && e.at <= spec.duration)) errors.push('timeline must be sorted and within duration');
+      if (!['input','select','reset'].includes(e.type)) errors.push('unknown timeline action');
+      if (e.type === 'input' && !ids.has(e.id)) errors.push('unknown timeline control ' + e.id);
+      previous = e.at;
+    }
+    return errors;
+  }
+  function validateScene(s) {
+    const errors = [], ids = new Set();
+    for (const n of s.nodes) {
+      if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(n.id || '') || ids.has(n.id)) errors.push('node IDs must be unique safe identifiers');
+      ids.add(n.id);
+      if (!['card','vector','matrix','bars','stack','sparkline'].includes(n.kind || 'card')) errors.push('unknown node kind ' + n.kind);
+      if (!n.label) errors.push('node label required');
+      if (![n.x,n.y,n.w,n.h].every(Number.isFinite) || n.w <= 0 || n.h <= 0) errors.push('finite node x/y/w/h required: ' + n.id);
+      if (n.x < 0 || n.y < 0 || n.x + n.w > s.width || n.y + n.h > s.height) errors.push('node outside viewBox: ' + n.id);
+      if(['bars','sparkline','vector'].includes(n.kind) && !n.values?.length) errors.push('values required: '+n.id);
+      if(n.kind==='bars' && n.values?.some(v=>v<0)) errors.push('bars require nonnegative values: '+n.id);
+      const vals = (n.values || []).flat();
+      if (vals.some(v => v !== null && !Number.isFinite(v))) errors.push('nonfinite values: ' + n.id);
+      if (n.kind === 'matrix' && (!(n.values?.length) || !n.values.every(row => Array.isArray(row) && row.length === n.values[0].length))) errors.push('matrix must be rectangular');
+    }
+    for(let i=0;i<s.nodes.length;i++)for(let j=i+1;j<s.nodes.length;j++) {
+      const a=s.nodes[i],b=s.nodes[j];
+      if(a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y) errors.push('overlapping nodes: '+a.id+' / '+b.id);
+    }
+    const edges = new Set();
+    for (const e of s.edges) {
+      if (!e.id || edges.has(e.id)) errors.push('edge IDs must be unique');
+      edges.add(e.id);
+      if (!ids.has(e.from) || !ids.has(e.to)) errors.push('edge endpoint missing: ' + e.id);
+      if (!(e.start >= 0 && e.end > e.start && e.end <= s.duration)) errors.push('edge needs start < end within duration: ' + e.id);
+      if (e.points && (e.points.length !== 4 || !e.points.flat().every(Number.isFinite))) errors.push('edge points must be four [x,y] cubic control points');
+    }
+    return errors;
+  }
+  function points(edge, nodes) {
+    if (edge.points) return edge.points;
+    const a = nodes.find(n => n.id === edge.from), b = nodes.find(n => n.id === edge.to);
+    const x = a.x + a.w, y = a.y + a.h/2, xx = b.x, yy = b.y + b.h/2;
+    return [[x,y],[x+(xx-x)/2,y],[x+(xx-x)/2,yy],[xx,yy]];
+  }
+  function point(p, t) {
+    return [0,1].map(i => (1-t)**3*p[0][i]+3*(1-t)**2*t*p[1][i]+3*(1-t)*t*t*p[2][i]+t**3*p[3][i]);
+  }
+  const text = (x,y,value,cls='',extra='') => `<text x="${x}" y="${y}" class="${cls}" ${extra}>${esc(value)}</text>`;
+  function node(n, index, selected) {
+    const col = n.color || palette[index % palette.length];
+    const depth=n.kind==='stack'?(Math.min(8,n.count || 3)-1)*5:0;
+    const x=n.x, y=n.y, w=n.w-depth, h=n.h-depth;
+    let content = '';
+    if (n.kind === 'stack') {
+      for (let i=Math.min(8,n.count || 3)-1;i>0;i--) content += `<rect x="${x+i*5}" y="${y+i*5}" width="${w}" height="${h}" rx="10" fill="var(--panel)" stroke="${esc(col)}" opacity=".55"/>`;
+    }
+    content += `<rect class="node-surface" x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="var(--panel)" stroke="${esc(col)}" stroke-width="${selected===n.id?3:1.2}"/>`;
+    content += `<path d="M${x+12} ${y+12}h20" stroke="${esc(col)}" stroke-width="3"/>`;
+    content += text(x+12,y+36,n.label,'node-label');
+    if(n.subtitle) content += text(x+12,y+55,n.subtitle,'node-subtitle');
+    const top=y+70, inner=w-24, room=h-82;
+    if (n.kind === 'vector' && n.values?.length) {
+      const step=inner/n.values.length;
+      n.values.forEach((v,i)=>{content+=`<rect x="${x+12+i*step}" y="${top}" width="${Math.max(1,step-3)}" height="${Math.min(34,room)}" rx="2" fill="${esc(col)}" fill-opacity="${.15+.8*clamp(Math.abs(v),0,1)}"><title>${esc(n.labels?.[i] || i+1)}: ${v.toFixed(3)}</title></rect>`;});
+    } else if (n.kind === 'matrix' && n.values?.length) {
+      const rows=n.values.length, cols=n.values[0].length, size=Math.min(inner/(cols+1),room/(rows+1),42), ox=x+12+size, oy=top+size;
+      n.values.forEach((row,r)=>{
+        content+=text(ox-5,oy+r*size+size*.6,n.labels?.[r] || r+1,'cell-label','text-anchor="end"');
+        row.forEach((v,c)=>{if(r===0)content+=text(ox+c*size+size/2,oy-8,n.labels?.[c] || c+1,'cell-label','text-anchor="middle"');content+=`<rect x="${ox+c*size}" y="${oy+r*size}" width="${size-2}" height="${size-2}" rx="3" fill="${esc(col)}" fill-opacity="${v===null?.04:.10+.35*clamp(v,0,1)}"/>`+text(ox+c*size+size/2,oy+r*size+size*.6,v===null?'×':`${Math.round(v*100)}`,'cell-label','text-anchor="middle"');});
+      });
+    } else if (n.kind === 'sparkline' && n.values?.length) {
+      const min=n.min ?? Math.min(0,...n.values), max=n.max ?? Math.max(...n.values,1);
+      const ch=Math.max(20,room-30), cw=inner-34, ox=x+42, oy=top+ch;
+      const pts=n.values.map((v,i)=>[ox+cw*i/Math.max(1,n.values.length-1),oy-ch*clamp((v-min)/(max-min || 1),0,1)]);
+      content+=`<path d="M${ox} ${top}V${oy}H${ox+cw}" fill="none" stroke="var(--line)"/>`;
+      content+=text(ox-5,top+8,Number(max.toFixed(2)),'cell-label','text-anchor="end"')+text(ox-5,oy,Number(min.toFixed(2)),'cell-label','text-anchor="end"');
+      content+=`<polyline data-series="${esc(n.id)}" points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${esc(col)}" stroke-width="2.5"/>`;
+      pts.forEach((p,i)=>{content+=`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${esc(col)}"><title>${esc(n.labels?.[i] || i+1)}: ${esc(n.values[i])}</title></circle>`;});
+      content+=text(ox,oy+18,n.labels?.[0] || '0','cell-label')+text(ox+cw,oy+18,n.labels?.[n.values.length-1] || n.values.length,'cell-label','text-anchor="end"');
+    } else if (n.kind === 'bars' && n.values?.length) {
+      const step=Math.min(38,room/n.values.length), max=n.max || Math.max(...n.values,1);
+      n.values.forEach((v,i)=>{const yy=top+i*step;content+=text(x+12,yy+10,n.labels?.[i] || i+1,'cell-label')+text(x+w-12,yy+10,n.format==='percent'?`${(v*100).toFixed(1)}%`:Number(v.toFixed(2)),'cell-label','text-anchor="end"');content+=`<rect x="${x+12}" y="${yy+17}" width="${inner}" height="5" rx="2" fill="${esc(col)}" opacity=".1"/><rect x="${x+12}" y="${yy+17}" width="${inner*clamp(v/max,0,1)}" height="5" rx="2" fill="${esc(col)}"/>`;});
+    } else {
+      (n.lines || []).forEach((line,i)=>{content+=text(x+12,top+i*22,line,'node-line');});
+    }
+    if(n.badge) content+=text(x+w-12,y+16,n.badge,'cell-label','text-anchor="end"');
+    return `<g data-node="${esc(n.id)}" role="button" tabindex="0" aria-label="${esc(n.label+'。'+(n.detail || n.subtitle || ''))}" aria-pressed="${selected===n.id}"><title>${esc(n.detail || n.label)}</title>${content}</g>`;
+  }
+  function svg(s, state, staticFrame=false) {
+    const selected=state.selected, relevant=new Set([selected]);
+    s.edges.forEach(e=>{if(e.from===selected||e.to===selected){relevant.add(e.from);relevant.add(e.to);}});
+    let body='';
+    for(const e of s.edges){
+      const p=points(e,s.nodes), col=e.color || '#4f5d75', active=!selected||e.from===selected||e.to===selected;
+      const d=`M${p[0]} C${p[1]} ${p[2]} ${p[3]}`;
+      body+=`<g opacity="${active?1:.18}"><path d="${d}" fill="none" stroke="${esc(col)}" stroke-width="${active&&selected?2.5:1.4}"/>`;
+      if(e.label){const q=point(p,.5);body+=text(q[0],q[1]-10,e.label,'edge-label','text-anchor="middle"');}
+      if(!staticFrame && state.time>=e.start&&state.time<e.end){const q=point(p,(state.time-e.start)/(e.end-e.start));body+=`<circle data-packet="${esc(e.id)}" cx="${q[0]}" cy="${q[1]}" r="5" fill="${esc(col)}" stroke="var(--paper)" stroke-width="2"/>`;}
+      body+='</g>';
+    }
+    s.nodes.forEach((n,i)=>{body+=`<g opacity="${!selected||relevant.has(n.id)?1:.8}">${node(n,i,selected)}</g>`;});
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${s.width} ${s.height}" data-interactive-svg="1" data-diagram-id="${esc(s.id)}" role="group" aria-labelledby="${s.id}-title ${s.id}-desc"><title id="${s.id}-title">${esc(s.title)}</title><desc id="${s.id}-desc">${esc(s.description)}</desc>${body}</svg>`;
+  }
+  function controls(spec) {
+    return (spec.controls || []).map(c=>{
+      const id=esc(spec.id+'-'+c.id);
+      const input=c.type==='select'?`<select id="${id}" data-input="${esc(c.id)}">${c.options.map(o=>`<option value="${esc(o.value)}" ${String(o.value)===String(c.value)?'selected':''}>${esc(o.label)}</option>`).join('')}</select>`:`<input id="${id}" data-input="${esc(c.id)}" type="${c.type}" value="${esc(c.value)}" ${c.type==='range'?`min="${c.min}" max="${c.max}" step="${c.step || 1}"`:`maxlength="${c.maxLength || 120}"`}/>`;
+      return `<label for="${id}">${esc(c.label)}${input}${c.type==='range'?`<output data-output="${esc(c.id)}">${esc(c.value)}</output>`:''}</label>`;
+    }).join('');
+  }
+  function mount(root, spec, model) {
+    if(root.diagram) return root.diagram;
+    let state=initial(spec), current, playing=false, raf=0, previous=0, scripted=false;
+    const $=s=>root.querySelector(s), reduced=matchMedia('(prefers-reduced-motion: reduce)');
+    const isStatic=new URLSearchParams(location.search).get('motion')==='static';
+    const exporting=!!global.__DIAGRAM_EXPORT__;
+    function render(full=true) {
+      current=scene(spec,state,model);
+      if(full){
+        const focus=document.activeElement?.closest('[data-node]')?.dataset.node;
+        $('[data-stage]').innerHTML=svg(current,state,isStatic||reduced.matches&&!exporting);
+        if(focus) [...root.querySelectorAll('[data-node]')].find(e=>e.dataset.node===focus)?.focus({preventScroll:true});
+        const selected=current.nodes.find(n=>n.id===state.selected);
+        $('[data-detail-title]').textContent=selected?.label || current.summaryTitle || '探索这张图';
+        $('[data-detail]').textContent=selected?.detail || current.summary || spec.description;
+        $('[data-metrics]').textContent=current.metrics || '';
+      } else {
+        // The geometry is deterministic; animation does not measure DOM paths.
+        $('[data-stage]').innerHTML=svg(current,state,reduced.matches&&!exporting);
+      }
+      $('[data-time]').value=String(state.time);
+      $('[data-clock]').textContent=state.time.toFixed(1)+' / '+spec.duration+' s';
+      $('[data-action="play"]').textContent=playing?'Ⅱ 暂停':'▶ 播放';
+      root.dataset.time=state.time.toFixed(4);
+    }
+    function pause(){playing=false;cancelAnimationFrame(raf);raf=0;previous=0;}
+    function syncControls(){for(const el of root.querySelectorAll('[data-input]')) {el.value=state.input[el.dataset.input];const out=[...root.querySelectorAll('[data-output]')].find(o=>o.dataset.output===el.dataset.input);if(out)out.value=el.value;}}
+    function seek(t,{timeline=true}={}) {pause();scripted=timeline;state=timeline?at(spec,t):{...state,time:clamp(number(t),0,spec.duration)};syncControls();render();return snapshot();}
+    function snapshot(){return copy({state,scene:current,playing});}
+    function dispatch(e){if(isStatic)return snapshot();pause();scripted=false;state=action(spec,state,e);if(e.type==='input')state.time=0;syncControls();render();$('[data-status]').textContent='已更新：'+(current.metrics || current.title);return snapshot();}
+    function tick(now){if(!playing)return;const dt=previous?(now-previous)/1000:0;previous=now;const t=Math.min(spec.duration,state.time+dt);state=scripted?at(spec,t):{...state,time:t};syncControls();if(t>=spec.duration)pause();render(true);if(playing)raf=requestAnimationFrame(tick);}
+    function play(){if(isStatic||reduced.matches&&!exporting)return;if(playing){pause();render();return;}if(state.time>=spec.duration)state.time=0;playing=true;previous=0;raf=requestAnimationFrame(tick);render();}
+    function activate(target){if(isStatic)return;const el=target.closest('[data-node]');if(el){const n=current.nodes.find(n=>n.id===el.dataset.node);dispatch(n?.action || {type:'select',id:el.dataset.node});}}
+    root.addEventListener('click',e=>{
+      const act=e.target.closest('[data-action]')?.dataset.action;
+      if(act==='play')play();else if(act==='reset')dispatch({type:'reset'});else if(act==='tour'){seek(0);play();}else if(act==='expand'){root.classList.toggle('is-expanded');e.target.textContent=root.classList.contains('is-expanded')?'退出沉浸':'沉浸模式';}else activate(e.target);
+    });
+    root.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-node]')){e.preventDefault();activate(e.target);}if(e.key==='Escape')root.classList.remove('is-expanded');});
+    root.addEventListener('input',e=>{if(e.target.matches('[data-time]'))seek(e.target.value,{timeline:scripted});else if(e.target.matches('[data-input]'))dispatch({type:'input',id:e.target.dataset.input,value:e.target.value});});
+    reduced.addEventListener('change',()=>{pause();render();$('[data-action="play"]').disabled=reduced.matches;$('[data-action="tour"]').disabled=reduced.matches;});
+    const beforePrint=()=>{$('[data-stage]').innerHTML=svg(current,state,true);};
+    const afterPrint=()=>render();
+    global.addEventListener('beforeprint',beforePrint);global.addEventListener('afterprint',afterPrint);
+    const api={seek,dispatch,snapshot,play,pause:()=>{pause();render();},destroy:()=>{pause();global.removeEventListener('beforeprint',beforePrint);global.removeEventListener('afterprint',afterPrint);}};
+    root.diagram=api;
+    for(const el of root.querySelectorAll('[data-input]')){
+      el.id=spec.id+'-'+el.dataset.input;
+      const label=el.closest('label');if(label)label.htmlFor=el.id;
+    }
+    render();
+    if(!isStatic){root.classList.add('interactive-ready');$('[data-ui]').hidden=false;}
+    $('[data-action="play"]').disabled=reduced.matches;$('[data-action="tour"]').disabled=reduced.matches;
+    return api;
+  }
+  global.DiagramInteractive={esc,defaults,normalize,initial,action,at,scene,validate,validateScene,points,point,svg,controls,mount};
+  if(typeof module!=='undefined')module.exports=global.DiagramInteractive;
+})(typeof window==='undefined'?globalThis:window);
+</script>
+<script data-diagram-boot>(()=>{const root=document.querySelector('[data-interactive-version]');try{const spec=JSON.parse(document.querySelector('[data-diagram-spec]').textContent);window.diagram=DiagramInteractive.mount(root,spec,globalThis.DiagramModel);window.diagramReady=true;}catch(error){root.querySelector('[data-status]').textContent='交互初始化失败，显示静态图。';window.diagramError=String(error);console.error(error);}})();</script>
+</body></html>

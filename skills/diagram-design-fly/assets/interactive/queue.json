@@ -1,0 +1,7 @@
+{
+ "version":1,"id":"queue-lab","title":"当请求比处理速度更快","eyebrow":"Interactive Atlas / 02 · Queue",
+ "description":"调整到达速率、处理能力和缓冲容量，观察队列如何积累、排空或溢出。每个数值来自同一个流体近似模型。",
+ "width":1200,"height":460,"duration":10,"exportWidth":1440,"exportHeight":800,
+ "controls":[{"id":"arrival","type":"range","label":"到达 / 秒","min":1,"max":30,"value":18},{"id":"service","type":"range","label":"处理 / 秒","min":1,"max":30,"value":10},{"id":"capacity","type":"range","label":"队列容量","min":10,"max":100,"value":40}],
+ "timeline":[{"at":0,"type":"select","id":"queue"},{"at":5,"type":"input","id":"service","value":25}]
+}

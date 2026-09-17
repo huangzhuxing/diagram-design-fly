@@ -19,11 +19,36 @@ node scripts/render-video.mjs skills/diagram-design-fly/assets/example-skill-arc
 ```
 </details>
 
-**这个 fork 新增的是 `flow` 模式。** 真正会流动的管线：物料在管道中移动、光点跨越连接线、接收节点在物料到达时脉冲。纯 CSS、零 JavaScript，底下压着一张完整的静态图。外加一条命令，把任意 flow 图渲染成 MP4、WebM 或 GIF。
+**这个 fork 新增了 `flow` 和交互图表能力。** 真正会流动的管线：物料在管道中移动、光点跨越连接线、接收节点在物料到达时脉冲。纯 CSS、零 JavaScript，底下压着一张完整的静态图。外加一条命令，把任意 flow 图渲染成 MP4、WebM 或 GIF。
 
 ![这个 fork 新增了什么 —— 上半部分刻意静止，下半部分在流动](docs/motion/fork-delta.gif)
 
 *两个部分由同一个 skill 绘制。上半部分没有挂 flow 层 —— 这个对比本身就是 changelog。*（[源文件](skills/diagram-design-fly/assets/example-fork-delta-flow.html)）
+
+
+## 新增：可探索的交互图表（本地实现）
+
+除了固定管线流动，skill 现在可以根据主题选择参数实验、层级切换、节点解释与动态计算。场景数据和可替换的纯计算模型由构建器打包成一个离线 HTML，内含完整静态底图。
+
+- [Transformer 实验](skills/diagram-design-fly/assets/example-transformer-interactive.html)：原创微型教学模型，实际计算 16 维、4 个头、3 层；未经训练。
+- [队列瓶颈实验](skills/diagram-design-fly/assets/example-queue-interactive.html)：调整到达速率、处理能力和容量，观察排队与丢弃，验证请求守恒。
+- [交互模式文档](skills/diagram-design-fly/references/interactive.md)：组件选择、场景格式、计算接口、降级、验证与扩展边界。
+
+```text
+用 diagram-design-fly 做一个缓存命中与过期的交互教学图。
+可以调整 TTL 和请求时刻，选择路径查看解释，播放时看见请求的去向。
+使用默认样式。
+```
+
+卡片、向量、矩阵、概率条、叠层和控制器可以复用；计算规则由主题决定。浏览器播放与视频导出共用可定位到任意时刻的时间轴，支持 MP4、WebM 和 GIF。
+
+```bash
+node scripts/render-video.mjs skills/diagram-design-fly/assets/example-transformer-interactive.html --format mp4
+node scripts/test-interactive.mjs
+python3 scripts/test-interactive-browser.py
+```
+
+矩阵组件的颜色与数值具有明确的比例语义；不同量纲需要选择合适组件或扩展渲染器。当前新增的是 SVG 交互能力，立体叠层也由 SVG 绘制。
 
 ---
 
@@ -70,7 +95,7 @@ node scripts/render-video.mjs docs/examples/opspilot-current-architecture.html -
 
 > *最高质量的动作通常是删除。* 每个节点都要挣得自己的位置。强调色只留给读者最该先看的那 1–2 个东西。目标密度：4/10。
 
-**这个 fork 加的是** `flow` 模式 —— 为那些主题本身就是「吞吐」的图提供持续运动 —— 以及一条把任意 flow 图渲染成 MP4/WebM/GIF 的视频导出通路。**其余全部是上游的，未作改动。** 如果你不需要动效，请直接用[原版](https://github.com/cathrynlavery/diagram-design)。
+**这个 fork 加的是** `flow` 模式 —— 为那些主题本身就是「吞吐」的图提供持续运动 —— 以及一条把任意 flow 图渲染成 MP4/WebM/GIF 的视频导出通路。交互模式及其运行时、模板和验证也由本 fork 新增。 如果你不需要动效，请直接用[原版](https://github.com/cathrynlavery/diagram-design)。
 
 ---
 

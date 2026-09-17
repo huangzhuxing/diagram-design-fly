@@ -291,6 +291,12 @@ def shipped_motion_files() -> list[Path]:
 def verify(path: Path) -> list[str]:
     source = path.read_text(encoding="utf-8")
     parser = parsed_document(source)
+    if any(root.get("data-motion-mode") == "interactive" for root in parser.roots):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("interactive_contract", ASSET_DIR.parent / "scripts/verify_interactive.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.verify(path)
     errors: list[str] = []
 
     if len(parser.roots) != 1:
